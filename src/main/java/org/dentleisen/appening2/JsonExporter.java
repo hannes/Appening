@@ -59,7 +59,9 @@ public class JsonExporter {
 					try {
 						File tmpFile = File.createTempFile("appening-places",
 								".json");
-						json.writeJSONString(new FileWriter(tmpFile));
+						FileWriter writer = new FileWriter(tmpFile);
+						json.writeJSONString(writer);
+						writer.close();
 
 						S3Object dataFileObject = new S3Object(tmpFile);
 						dataFileObject.setContentType("application/json");
@@ -79,7 +81,7 @@ public class JsonExporter {
 			t.scheduleAtFixedRate(tt, 0, interval);
 
 		} catch (Exception e) {
-			log.error("Unable to use S3, exiting",e);
+			log.error("Unable to use S3, exiting", e);
 			System.exit(-1);
 		}
 
