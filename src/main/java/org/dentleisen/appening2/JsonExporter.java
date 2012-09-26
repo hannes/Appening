@@ -32,7 +32,7 @@ public class JsonExporter {
 	private static final String awsAccessKey = Utils
 			.getCfgStr("appening.export.awsAccessKey");
 	private static final String awsSecretKey = Utils
-			.getCfgStr("appening.export.awsAccessKey");
+			.getCfgStr("appening.export.awsSecretKey");
 	private static final String s3Bucket = Utils
 			.getCfgStr("appening.export.S3Bucket");
 	private static final String s3Key = Utils
@@ -79,7 +79,7 @@ public class JsonExporter {
 			t.scheduleAtFixedRate(tt, 0, interval);
 
 		} catch (Exception e) {
-			log.error("Unable to use S3, exiting");
+			log.error("Unable to use S3, exiting",e);
 			System.exit(-1);
 		}
 

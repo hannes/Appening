@@ -32,8 +32,8 @@ public class Utils {
 	private static Properties configuration = new Properties();
 	static {
 		try {
-			configuration.load(Utils.class
-					.getResourceAsStream("/appening.properties"));
+			configuration.load(Utils.class.getClassLoader()
+					.getResourceAsStream("appening.properties"));
 		} catch (IOException e) {
 			log.warn("Unable to find properties in Classpath!");
 		}
