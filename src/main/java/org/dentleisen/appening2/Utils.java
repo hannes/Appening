@@ -1,13 +1,12 @@
 package org.dentleisen.appening2;
 
 import java.beans.PropertyVetoException;
+import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.UnsupportedEncodingException;
 import java.net.URLEncoder;
 import java.sql.Connection;
-import java.sql.ResultSet;
 import java.sql.SQLException;
-import java.sql.Statement;
 import java.text.DateFormat;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
@@ -16,6 +15,7 @@ import java.util.Iterator;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.Properties;
 
 import org.apache.http.HttpResponse;
 import org.apache.http.client.methods.HttpGet;
@@ -29,21 +29,47 @@ import com.mchange.v2.c3p0.ComboPooledDataSource;
 public class Utils {
 	private static Logger log = Logger.getLogger(Utils.class);
 
-	private static ComboPooledDataSource cpds = new ComboPooledDataSource();
+	private static Properties configuration = new Properties();
 	static {
-		// TODO: make db config configurable (properties file?)
 		try {
-			cpds.setDriverClass("com.mysql.jdbc.Driver");
-		} catch (PropertyVetoException e) {
-			log.warn("Unable to use JDBC driver", e);
+			configuration.load(Utils.class
+					.getResourceAsStream("/appening.properties"));
+		} catch (IOException e) {
+			log.warn("Unable to find properties in Classpath!");
 		}
-		cpds.setJdbcUrl("jdbc:mysql://localhost:3306/appening2");
-		cpds.setUser("appening2");
-		cpds.setPassword("sGDCuQXZY2ZKbsXx");
 	}
 
-	public static Connection getConnection() {
+	private static ComboPooledDataSource cpds = null;
+
+	public static String getCfgStr(String key) {
+		if (!configuration.containsKey(key)) {
+			log.warn("Unable to find key '" + key + "' in configuration file!");
+			return "";
+		}
+		return (String) configuration.getProperty(key);
+	}
+
+	public static long getCfgInt(String key) {
+		return Long.parseLong(getCfgStr(key));
+	}
+
+	public static double getCfgDbl(String key) {
+		return Double.parseDouble(getCfgStr(key));
+	}
+
+	public synchronized static Connection getConnection() {
 		try {
+			if (cpds == null) {
+				cpds = new ComboPooledDataSource();
+				try {
+					cpds.setDriverClass("com.mysql.jdbc.Driver");
+				} catch (PropertyVetoException e) {
+					log.warn("Unable to use JDBC driver", e);
+				}
+				cpds.setJdbcUrl(getCfgStr("appening.db.url"));
+				cpds.setUser(getCfgStr("appening.db.user"));
+				cpds.setPassword(getCfgStr("appening.db.password"));
+			}
 			return cpds.getConnection();
 		} catch (SQLException e) {
 			log.warn("Unable to get db connection", e);
@@ -101,35 +127,5 @@ public class Utils {
 		SimpleDateFormat sf = new SimpleDateFormat(TWITTER, Locale.ENGLISH);
 		sf.setLenient(true);
 		return sf.parse(date);
-	}
-
-	public static ResultSet runQuery(String sql) {
-		Connection c = null;
-		Statement s = null;
-		ResultSet rs = null;
-		try {
-			c = Utils.getConnection();
-			s = c.createStatement();
-			rs = s.executeQuery(sql);
-		} catch (SQLException e) {
-			log.warn("Failed to run statement " + sql, e);
-		} finally {
-			try {
-				rs.close();
-			} catch (SQLException e) {
-				log.warn("Failed to clean up after statement " + sql, e);
-			}
-			try {
-				s.close();
-			} catch (SQLException e) {
-				log.warn("Failed to clean up after statement " + sql, e);
-			}
-			try {
-				c.close();
-			} catch (SQLException e) {
-				log.warn("Failed to clean up after statement " + sql, e);
-			}
-		}
-		return rs;
 	}
 }

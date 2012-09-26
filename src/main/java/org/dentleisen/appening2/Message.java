@@ -14,6 +14,8 @@ import java.util.List;
 import org.apache.log4j.Logger;
 import org.json.simple.JSONObject;
 
+import twitter4j.Tweet;
+
 public class Message {
 	private static Logger log = Logger.getLogger(Message.class);
 
@@ -41,6 +43,11 @@ public class Message {
 		String text = (String) jMessage.get("text");
 
 		return new Message(id, user, created, text);
+	}
+
+	public static Message fromTwitter4JObject(Tweet t) {
+		String id = Long.toString(t.getId());
+		return new Message(id, t.getFromUser(), t.getCreatedAt(), t.getText());
 	}
 
 	public void save() {
@@ -158,7 +165,7 @@ public class Message {
 		return text.substring(0, Math.min(text.length(), 100)) + " - "
 				+ created;
 	}
-	
+
 	public static void main(String[] args) {
 		log.info(Message.messagesCount("hard rock cafe", 12.0));
 	}

@@ -17,7 +17,15 @@ public class TwitterCollector {
 	private static DecimalFormat twitterPosFormat = new DecimalFormat("#.####");
 	private static final String TWITTER_URL = "http://search.twitter.com/search.json";
 
-	private static final long interval = 1000 * 60 * 1;
+	private static final long interval = Utils
+			.getCfgInt("appening.collect.intervalSeconds") * 1000;
+
+	private static final double circleCenterLat = Utils
+			.getCfgDbl("appening.collect.circleLat");
+	private static final double circleCenterLng = Utils
+			.getCfgDbl("appening.collect.circleLng");
+	private static final long circleRadiusKm = Utils
+			.getCfgInt("appening.collect.circleRadiusKm");
 
 	public static void main(String[] args) {
 
@@ -25,8 +33,8 @@ public class TwitterCollector {
 		TimerTask tt = new TimerTask() {
 			@Override
 			public void run() {
-				List<Message> msgs = loadMessages(Message.getLastId(), 52.3741,
-						4.897, 10);
+				List<Message> msgs = loadMessages(Message.getLastId(),
+						circleCenterLat, circleCenterLng, circleRadiusKm);
 				log.info("Loaded " + msgs.size() + " msgs");
 				for (Message m : msgs) {
 					m.save();
@@ -37,7 +45,7 @@ public class TwitterCollector {
 	}
 
 	public static List<Message> loadMessages(String lastId, double lat,
-			double lng, int radiusKm) {
+			double lng, long radiusKm) {
 		List<Message> resultMsgs = new ArrayList<Message>();
 
 		Map<String, String> params = new HashMap<String, String>();
