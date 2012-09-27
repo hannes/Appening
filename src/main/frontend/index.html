@@ -142,7 +142,7 @@ data.sort(function(a,b) {
 
 $.each(data,function(index,place) {
 if (place.sum < 10 || place.trend.rank <= 0) {
-    	//return;
+    	return;
     }
     
  var line  = "<tr>";
@@ -167,11 +167,17 @@ if (place.sum < 10 || place.trend.rank <= 0) {
     items.push(line);
 
 });
+
+if (items.length > 0) {
  $('#places').html(items.join('\n'));
 
-if (items.lengh == 0) {
+}
+else {
  	 $('#places').html('<tr><td>Sorry, nothing "appening" right now! Come back later...</td></tr>');
  }
+ 
+
+
  
      setTimeout(worker, 5000);
 
