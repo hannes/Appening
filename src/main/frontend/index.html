@@ -76,12 +76,17 @@ function lastHours(pointsArr,maxHours) {
 	return h;
 }
 
-function generateBla(pointsArr,maxHours) {
+function generateTrend(pointsArr,maxHours) {
  	var data = lastHours(pointsArr,maxHours);
     var s = slope(data);
     var n = 0;
     $.each(data,function(x,y){n+=y});
+	return {'n':n,'s':s};
+}
 
+function trendFigure(trend) {
+    var s = trend.s;
+    var n = trend.n;
     
     if (n < 2) {
     	return '<td style="color:gray;">-</td>';
@@ -93,12 +98,12 @@ function generateBla(pointsArr,maxHours) {
 		prefix = ''
     }
     
-    return '<td><span style="color:'+color+';">'+prefix+''+s.toFixed(2)+'</span> <small>(n='+n+')</small></td>'
+    return '<td><span style="color:'+color+';">'+prefix+''+s.toFixed(2)+'</span> <small>(n='+n+')</small></td>';
 }
 
-$.getJSON('places.json', function(data) {
-  var items = [];
 
+(function worker() {
+$.getJSON('places.json', function(data) {
 $.each(data,function(index,place) {
 	// calculate the mentioned time series 48h back
 	var mts = [];
@@ -109,34 +114,70 @@ $.each(data,function(index,place) {
     		mts[h] = 0;
     	}
     }
-    
+ //   mts = mts.reverse();
     var sum = 0;
     $.each(mts,function(i,v){sum+=v});
     
-    if (sum < 10) {
-    	return;
+    place.sum = sum;
+    place.mentionsSeries = mts;
+    
+    place.trend = {};
+    place.trend.h48 = generateTrend(mts,48);
+    place.trend.h24 = generateTrend(mts,24);
+    place.trend.h12 = generateTrend(mts,12);
+    place.trend.h6 = generateTrend(mts,6);
+    place.trend.h3 = generateTrend(mts,3);
+
+	place.trend.rank = place.trend.h6.n *  place.trend.h6.s + 5 * place.trend.h3.n *  place.trend.h3.s;  
+    
+    
+    
+});
+
+data.sort(function(a,b) {
+        return (a.trend.rank < b.trend.rank) ? 1 : (a.trend.rank > b.trend.rank) ? -1 : 0;
+});
+
+  var items = [];
+
+$.each(data,function(index,place) {
+if (place.sum < 10 || place.trend.rank <= 0) {
+    	//return;
     }
     
-    var line  = "<tr>";
-    line += '<td><b>'+place.name+'</b></td>';
+ var line  = "<tr>";
+    line += '<td title="'+place.id+'"><b>'+place.name+'</b></td>';
+    
+	// make copy here, because reverse operates in-place
+	var chartSeries = place.mentionsSeries.slice().reverse();
+    line += '<td><img src="http://chart.googleapis.com/chart?cht=ls&chxr=0,0,72&chxs=0,676767,0,0,_,676767&chm=D,0033FF,0,0,1,1&chs=200x50&chds=a&chd=t:'+ chartSeries.join(',') +'&chxt=x,y" /></td>';
+    
+    
+    line += trendFigure(place.trend.h48);
+    line += trendFigure(place.trend.h24);
+    line += trendFigure(place.trend.h12);
+    line += trendFigure(place.trend.h6);
+	line += trendFigure(place.trend.h3);
 
-    line += '<td><img src="http://chart.googleapis.com/chart?cht=ls&chxr=0,0,72&chxs=0,676767,0,0,_,676767&chm=D,0033FF,0,0,1,1&chs=200x50&chds=a&chd=t:'+ mts.reverse().join(',') +'&chxt=x,y" /></td>';
-    
-   line += generateBla(mts,24);
-       line += generateBla(mts,12);
-   line += generateBla(mts,6);
-   line += generateBla(mts,3);
+   line += '<td>'+place.trend.rank.toFixed(2)+'</td>';
 
-    
-    
     line += '</tr>';
+    
 
     items.push(line);
-});
 
+});
  $('#places').html(items.join('\n'));
-});
 
+if (items.lengh == 0) {
+ 	 $('#places').html('<tr><td>Sorry, nothing "appening" right now! Come back later...</td></tr>');
+ }
+ 
+     setTimeout(worker, 5000);
+
+ 
+});
+})();
 
 /*
 var mapOptions = {
