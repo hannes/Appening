@@ -21,10 +21,12 @@
 
     <div class="container">
 
+		<div id="map_canvas" style="width: auto; height: 300px;"></div>
+
+
 		<table id="places" class="table">
 		</table>
 		
-		<div id="map_canvas" style="width: auto; height: 300px;"></div>
     </div> 
 
 
@@ -106,7 +108,7 @@ function trendFigure(trend) {
 
 
 (function worker() {
-$.getJSON('places.json', function(data) {
+$.getJSON('data/places.json', function(data) {
 $.each(data,function(index,place) {
 	// calculate the mentioned time series 48h back
 	var mts = [];

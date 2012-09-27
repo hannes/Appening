@@ -16,6 +16,7 @@ import java.util.Locale;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Properties;
+import java.util.TimeZone;
 
 import org.apache.http.HttpResponse;
 import org.apache.http.client.methods.HttpGet;
@@ -81,6 +82,10 @@ public class Utils {
 			"yyyy-MM-dd' 'HH:mm:ss");
 	public static final DateFormat sqlDateFormat = new SimpleDateFormat(
 			"yyyy-MM-dd");
+	static {
+		sqlDateTimeFormat.setTimeZone(TimeZone.getTimeZone("UTC"));
+		sqlDateFormat.setTimeZone(TimeZone.getTimeZone("UTC"));
+	}
 
 	private static DefaultHttpClient httpClient = new DefaultHttpClient();
 

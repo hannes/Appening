@@ -177,4 +177,44 @@ public class Place {
 		return places;
 	}
 
+	public List<Message> loadRecentMessages(int numMessages, int threshold) {
+		List<Message> messages = new ArrayList<Message>();
+		Connection c = null;
+		PreparedStatement s = null;
+		ResultSet rs = null;
+		try {
+			c = Utils.getConnection();
+			s = c.prepareStatement("SELECT * FROM `messages` WHERE MATCH (`text`) AGAINST (? IN NATURAL LANGUAGE MODE) > ? ORDER BY `created` DESC LIMIT ?");
+			s.setString(1, name);
+			s.setInt(2, threshold);
+			s.setInt(3, numMessages);
+			rs = s.executeQuery();
+
+			while (rs.next()) {
+				messages.add(Message.fromSqlResult(rs));
+			}
+
+		} catch (SQLException e) {
+			log.warn("Failed to run statement", e);
+		} finally {
+			try {
+				rs.close();
+			} catch (SQLException e) {
+				log.warn("Failed to clean up after statement", e);
+			}
+			try {
+				s.close();
+			} catch (SQLException e) {
+				log.warn("Failed to clean up after statement", e);
+			}
+			try {
+				c.close();
+			} catch (SQLException e) {
+				log.warn("Failed to clean up after statement", e);
+			}
+		}
+
+		return messages;
+	}
+
 }

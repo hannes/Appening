@@ -139,9 +139,16 @@ public class Message {
 		return ret;
 	}
 
-	private static Message fromSqlResult(ResultSet rs) throws SQLException {
-		return new Message(rs.getString("id"), rs.getString("user"),
-				rs.getDate("created"), rs.getString("text"));
+	public static Message fromSqlResult(ResultSet rs) throws SQLException {
+		Date d = Calendar.getInstance().getTime();
+		try {
+			d = Utils.sqlDateTimeFormat.parse(rs.getString("created"));
+		} catch (ParseException e) {
+			log.warn("Unable to parse date", e);
+		}
+
+		return new Message(rs.getString("id"), rs.getString("user"), d,
+				rs.getString("text"));
 	}
 
 	public String getId() {
