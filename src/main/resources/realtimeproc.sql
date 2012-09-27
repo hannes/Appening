@@ -6,6 +6,9 @@ CREATE DEFINER=CURRENT_USER PROCEDURE `generateRealtimeProc`()
     MODIFIES SQL DATA
     DETERMINISTIC
 BEGIN
+
+DECLARE `procedureName` VARCHAR(100) DEFAULT 'generateRealtimeProc';
+
 DECLARE `threshold` INT DEFAULT 13;
 DECLARE `presentCount` INT;
 DECLARE `startHour`,`endHour` DATETIME;
@@ -23,6 +26,13 @@ SET time_zone='+0:00';
 SET `startHour`= DATE_SUB(DATE_SUB(NOW(), INTERVAL SECOND(NOW()) SECOND) , INTERVAL MINUTE(NOW()) MINUTE);
 SET `endHour`= NOW();
 
+`procBody`:BEGIN
+IF (EXISTS(SELECT `running` FROM `procstat` WHERE `procedure`=`procedureName` AND `running`=TRUE)) THEN
+	LEAVE `procBody`;
+END IF;
+DELETE FROM `procstat` WHERE `procedure`=`procedureName`;
+INSERT INTO `procstat` (`procedure`,`running`,`lastCompleted`) VALUES(`procedureName`,TRUE,NOW()); 
+
 OPEN `placesCursor`;
 
 `placesLoop`: LOOP
@@ -39,7 +49,12 @@ OPEN `placesCursor`;
 		
 END LOOP;
 CLOSE `placesCursor`;
+
+UPDATE `procstat` SET `running`=FALSE,`lastCompleted`=NOW() WHERE `procedure`=`procedureName`;
+
 	
+END;
+
 END//
 
 DELIMITER ;

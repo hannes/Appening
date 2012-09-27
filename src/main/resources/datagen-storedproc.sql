@@ -6,6 +6,9 @@ CREATE DEFINER=CURRENT_USER PROCEDURE `generateCountsProc`( `generateDate` DATE)
     MODIFIES SQL DATA
     DETERMINISTIC
 BEGIN
+
+DECLARE `procedureName` VARCHAR(100) DEFAULT 'generateCountsProc';
+
 DECLARE `threshold` INT DEFAULT 13;
 DECLARE `presentCount` INT;
 DECLARE `minHour`,`maxHour`,`curHour`,`endHour` DATETIME;
@@ -22,8 +25,15 @@ SET time_zone='+0:00';
 SET `minHour` = DATE_ADD(`generateDate`, INTERVAL 0 SECOND);
 SET `maxHour`= DATE_SUB(DATE_SUB(NOW(), INTERVAL SECOND(NOW()) SECOND) , INTERVAL MINUTE(NOW()) MINUTE);
 
-OPEN `placesCursor`;
+`procBody`:BEGIN
+IF (EXISTS(SELECT `running` FROM `procstat` WHERE `procedure`=`procedureName` AND `running`=TRUE)) THEN
+	LEAVE `procBody`;
+END IF;
+DELETE FROM `procstat` WHERE `procedure`=`procedureName`;
+INSERT INTO `procstat` (`procedure`,`running`,`lastCompleted`) VALUES(`procedureName`,TRUE,NOW()); 
 
+
+OPEN `placesCursor`;
 `placesLoop`: LOOP
 	FETCH `placesCursor` INTO `pid`,`pname`;
 	IF `done` THEN
@@ -52,6 +62,10 @@ OPEN `placesCursor`;
 	
 END LOOP;
 CLOSE `placesCursor`;
+
+UPDATE `procstat` SET `running`=FALSE,`lastCompleted`=NOW() WHERE `procedure`=`procedureName`;
+
+END;
 	
 END//
 
