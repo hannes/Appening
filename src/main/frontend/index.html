@@ -106,6 +106,21 @@ function trendFigure(trend) {
     return '<td><span style="color:'+color+';">'+prefix+''+s.toFixed(2)+'</span> <small>(n='+n+')</small></td>';
 }
 
+function linkify(text) {
+    text = text.replace(/(https?:\/\/\S+)/gi, function (s) {
+        return '<a href="' + s + '">' + s + '</a>';
+    });
+
+    text = text.replace(/(^|)@(\w+)/gi, function (s) {
+        return '<a href="http://twitter.com/' + s + '">' + s + '</a>';
+    });
+
+    text = text.replace(/(^|)#(\w+)/gi, function (s) {
+        return '<a href="http://search.twitter.com/search?q=' + s.replace(/#/,'%23') + '">' + s + '</a>';
+     });
+    return text;
+}
+
 
 (function worker() {
 $.getJSON('data/places.json', function(data) {
@@ -157,7 +172,7 @@ if (place.sum < 10 || place.trend.rank <= 1) {
     }
     
  var line  = "<tr>";
-    line += '<td title="'+place.id+'"><b>'+place.name+'</b></td>';
+    line += '<td><span class="place" id="'+place.id+'">'+place.name+'</span></td>';
     
 	// make copy here, because reverse operates in-place
 	var chartSeries = place.mentionsSeries.slice().reverse();
@@ -191,29 +206,29 @@ if (place.sum < 10 || place.trend.rank <= 1) {
 if (items.length > 0) {
  $('#places').html('<tr><th>Place</th><th>48h-Plot</th><th>48h</th><th>24h</th><th>12h</th><th>6h</th><th>3h</th><th>Rank</th></tr>'+items.join('\n'));
 
+
+$('.place').click(function(){
+	var ele = this;
+	$.getJSON('data/'+this.id+'-messages.json', function(data) {
+		var msgs = [];
+		$.each(data,function(index,message) {
+			msgs.push(linkify('@'+message.user + ': ' +message.text));
+		});
+		$('<tr><td colspan="100">'+msgs.join('<br>')+'</td></tr>').insertAfter($(ele).closest('tr'));
+		
+	});
+});
+
 }
 else {
  	 $('#places').html('<tr><td>Sorry, nothing "appening" right now! Come back later...</td></tr>');
  }
- 
-
-
- 
      setTimeout(worker, 1*60*1000); // 1 min
 
- 
 });
 })();
 
-/*
-var mapOptions = {
-          center: new google.maps.LatLng(52.3704,4.895),
-          zoom: 15,
-          mapTypeId: google.maps.MapTypeId.ROADMAP
-        };
-        var map = new google.maps.Map(document.getElementById("map_canvas"),
-            mapOptions);
-*/
+
             
 </script>
 
