@@ -171,8 +171,8 @@ if (place.sum < 10 || place.trend.rank <= 1) {
     	return;
     }
     
- var line  = "<tr>";
-    line += '<td><span class="place" id="'+place.id+'">'+place.name+'</span></td>';
+ var line  = '<tr class="place" id="'+place.id+'">';
+    line += '<td>'+place.name+'</td>';
     
 	// make copy here, because reverse operates in-place
 	var chartSeries = place.mentionsSeries.slice().reverse();
@@ -192,9 +192,11 @@ if (place.sum < 10 || place.trend.rank <= 1) {
     
     $('#map_canvas').gmap('addMarker', { 
 				'position': new google.maps.LatLng(place.lat, place.lng), 
-				'bounds': true 
+				'bounds': true,
+				'id':place.id 
 			}).click(function() {
-				$('#map_canvas').gmap('openInfoWindow', { 'content': place.name }, this);
+				/*$('#map_canvas').gmap('openInfoWindow', { 'content': place.name }, this);*/
+				$('#'+place.id).trigger('click');
 		});
 			
 			
@@ -209,12 +211,32 @@ if (items.length > 0) {
 
 $('.place').click(function(){
 	var ele = this;
-	$.getJSON('data/'+this.id+'-messages.json', function(data) {
+
+	if ($('#tweets-' + ele.id).length > 0) {
+		$('#tweets-' + ele.id).remove();
+		
+		$('#map_canvas').gmap('find', 'markers', { 'property': 'id', 'value': ele.id }, function(marker, isFound) {
+                 if ( marker.id == ele.id ) {
+					marker.setIcon('');
+                } 
+        });
+		return;
+	}
+
+ $('#map_canvas').gmap('find', 'markers', { 'property': 'id', 'value': ele.id }, function(marker, isFound) {
+                 if ( marker.id == ele.id ) {
+					marker.setIcon('blue_MarkerA.png');
+					marker.setVisible(true);
+                } 
+        });
+        
+        
+	$.getJSON('data/'+ele.id+'-messages.json', function(data) {
 		var msgs = [];
 		$.each(data,function(index,message) {
 			msgs.push(linkify('@'+message.user + ': ' +message.text));
 		});
-		$('<tr><td colspan="100">'+msgs.join('<br>')+'</td></tr>').insertAfter($(ele).closest('tr'));
+		$('<tr id="tweets-'+ele.id+'"><td colspan="100">'+msgs.join('<br>')+'</td></tr>').insertAfter($(ele).closest('tr'));
 		
 	});
 });
