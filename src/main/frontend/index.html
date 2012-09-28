@@ -36,11 +36,14 @@
 <script type="text/javascript" src="jquery.ui.map.min.js"></script>
 
 <script src="bootstrap.min.js"></script>
-
-<!--<script type="text/javascript" src="http://maps.googleapis.com/maps/api/js?key=AIzaSyCHCVlEq_VleQp6qKdOpPgGT1W1h3yG29s&sensor=false">-->
-
+	
 <script type="text/javascript">
-
+var hash = window.location.hash;
+var idregex = /-([\d]+)$/;
+var showPlaceId = undefined;
+if (idregex.test(hash)) {
+	showPlaceId = hash.match(idregex)[1];
+}
 
 function slope(pointsArr) {	
 	if (pointsArr.length < 2) {
@@ -125,6 +128,7 @@ function linkify(text) {
 (function worker() {
 $.getJSON('data/places.json', function(data) {
 $.each(data,function(index,place) {
+	
 	// calculate the mentioned time series 48h back
 	var mts = [];
     for (var h = 0; h <= 48; h++) {
@@ -167,12 +171,22 @@ data.sort(function(a,b) {
 $('#map_canvas').gmap();
 
 $.each(data,function(index,place) {
-if (place.sum < 10 || place.trend.rank <= 1) {
-    	return;
-    }
+
+
+
+if (showPlaceId != undefined) {
+	if (place.id != showPlaceId) {
+		return;
+	}
+}
+else {
+	if (place.sum < 10 || place.trend.rank <= 1) {
+			return;
+	}
+}
     
  var line  = '<tr class="place" id="'+place.id+'">';
-    line += '<td>'+place.name+'</td>';
+    line += '<td>'+place.name+' <a href="#'+encodeURIComponent(place.name)+'-'+place.id+'">_</a></td>';
     
 	// make copy here, because reverse operates in-place
 	var chartSeries = place.mentionsSeries.slice().reverse();
@@ -240,6 +254,10 @@ $('.place').click(function(){
 		
 	});
 });
+
+if (showPlaceId != undefined) {
+	$('#'+showPlaceId).trigger('click');
+}
 
 }
 else {
