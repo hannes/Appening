@@ -124,6 +124,8 @@ public class JsonExporter {
 			try {
 				s3 = new RestS3Service(new AWSCredentials(awsAccessKey,
 						awsSecretKey));
+				s3.getHttpClient().getParams()
+						.setParameter("http.protocol.content-charset", "UTF-8");
 			} catch (S3ServiceException e) {
 				log.warn("Unable to initialize S3 client", e);
 			}
