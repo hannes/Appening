@@ -2,12 +2,7 @@ package org.dentleisen.appening2;
 
 import java.io.File;
 import java.io.FileWriter;
-import java.text.DateFormat;
-import java.text.SimpleDateFormat;
-import java.util.Calendar;
 import java.util.List;
-import java.util.Map;
-import java.util.TimeZone;
 import java.util.Timer;
 import java.util.TimerTask;
 
@@ -44,10 +39,7 @@ public class JsonExporter {
 	private static final long interval = Utils
 			.getCfgInt("appening.export.intervalSeconds") * 1000;
 
-	private static DateFormat df = new SimpleDateFormat("yyyy-MM-dd'T'HH:mmZ");
-	static {
-		df.setTimeZone(TimeZone.getTimeZone("UTC"));
-	}
+	private static final int numMessages = 20;
 
 	public static void main(String[] args) {
 		try {
@@ -60,44 +52,27 @@ public class JsonExporter {
 					JSONArray json = new JSONArray();
 
 					try {
-						List<Place> places = Place.loadPopularPlaces(
+						List<PopularPlace> places = Place.loadPopularPlaces(
 								minMentions, minMentionsDays);
-						for (Place p : places) {
-							JSONObject placeObj = new JSONObject();
-
-							placeObj.put("id", p.id);
-							placeObj.put("name", p.name);
-							placeObj.put("lat", p.lat);
-							placeObj.put("lng", p.lng);
-
-							// recent mentions
-							Map<Integer, Integer> m = p
-									.loadPlaceMentions(Calendar.getInstance(
-											TimeZone.getTimeZone("UTC"))
-											.getTime());
-
-							// recent messages
-							List<Message> recentMessagesForPlace = p
-									.loadRecentMessages(20, 13);
-
-							placeObj.put("mentions", m);
-
+						for (PopularPlace p : places) {
+							// upload recent twitter messages so we can display
+							// them
 							JSONArray messages = new JSONArray();
-							for (Message msg : recentMessagesForPlace) {
-								JSONObject msgObj = new JSONObject();
-								msgObj.put("id", msg.getId());
-								msgObj.put("created",
-										df.format(msg.getCreated()));
-								msgObj.put("user", msg.getUser());
-								msgObj.put("text", msg.getText());
-								messages.add(msgObj);
+							List<Message> recentMessages = p
+									.loadRecentMessages(numMessages,
+											Utils.messageThreshold);
+							for (Message msg : recentMessages) {
+								messages.add(msg.toJSON());
 							}
 
 							String messagesJsonUrl = jsonArrToS3(messages,
 									s3Prefix + p.id + "-messages.json");
 
-							placeObj.put("messagesUrl", messagesJsonUrl);
-							json.add(placeObj);
+							// add reference to messages JSON to place so we ca
+							// load it from GUI
+							JSONObject pj = p.toJSON();
+							pj.put("messagesUrl", messagesJsonUrl);
+							json.add(pj);
 						}
 						jsonArrToS3(json, s3Prefix + "places.json");
 

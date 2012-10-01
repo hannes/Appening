@@ -127,45 +127,6 @@ function linkify(text) {
 
 (function worker() {
 $.getJSON('data/places.json', function(data) {
-$.each(data,function(index,place) {
-	
-	// calculate the mentioned time series 48h back
-	var mts = [];
-    for (var h = 0; h <= 48; h++) {
-    	if (place.mentions[h] != undefined) {
-    		mts[h] = place.mentions[h];
-    	} else {
-    		mts[h] = 0;
-    	}
-    }
- //   mts = mts.reverse();
-    var sum = 0;
-    $.each(mts,function(i,v){sum+=v});
-    
-    place.sum = sum;
-    place.mentionsSeries = mts;
-    
-    place.trend = {};
-    place.trend.h48 = generateTrend(mts,48);
-    place.trend.h24 = generateTrend(mts,24);
-    place.trend.h12 = generateTrend(mts,12);
-    place.trend.h6 = generateTrend(mts,6);
-    place.trend.h3 = generateTrend(mts,3);
-
-if (place.trend.h3.n > 1) {
-place.trend.rank = place.trend.h6.n *  place.trend.h6.s + 5 * place.trend.h3.n *  place.trend.h3.s; 
-} else {
-	place.trend.rank = 0;
-}
-	
-    
-    
-    
-});
-
-data.sort(function(a,b) {
-        return (a.trend.rank < b.trend.rank) ? 1 : (a.trend.rank > b.trend.rank) ? -1 : 0;
-});
 
   var items = [];
 $('#map_canvas').gmap();

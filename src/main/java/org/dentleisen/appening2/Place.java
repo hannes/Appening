@@ -7,15 +7,18 @@ import java.sql.SQLException;
 import java.sql.Statement;
 import java.sql.Timestamp;
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
 
 import org.apache.log4j.Logger;
 
 public class Place {
-	private static Logger log = Logger.getLogger(Place.class);
+	protected static Logger log = Logger.getLogger(Place.class);
 
 	public int id;
 	public String name;
@@ -23,6 +26,13 @@ public class Place {
 	public double lng;
 
 	public static final String NN = "NN";
+
+	public Place(Place somePlace) {
+		this.id = somePlace.id;
+		this.name = somePlace.name;
+		this.lat = somePlace.lat;
+		this.lng = somePlace.lng;
+	}
 
 	public Place(double lat, double lng) {
 		this.lat = lat;
@@ -43,7 +53,10 @@ public class Place {
 		this.name = name;
 	}
 
-	public Map<Integer, Integer> loadPlaceMentions(Date currentTime) {
+	// This is more or less fixed now...
+	public static final int hoursMentions = 48;
+
+	public long[] loadPlaceMentions(Date currentTime) {
 		Timestamp currentTimeSql = new java.sql.Timestamp(currentTime.getTime());
 		Map<Integer, Integer> mentions = new HashMap<Integer, Integer>();
 
@@ -52,12 +65,13 @@ public class Place {
 		ResultSet rs = null;
 		try {
 			c = Utils.getConnection();
-			s = c.prepareStatement("SELECT ROUND((UNIX_TIMESTAMP(?)-UNIX_TIMESTAMP(`start`))/3600) AS `hoursAgo`,`count` FROM `counts` WHERE `place`=? AND `start` > DATE_SUB(?,INTERVAL 48 HOUR) AND start < ?  UNION SELECT 0 AS `hoursAgo`,`count` FROM `nowcounts` WHERE `place` = ? ORDER BY `hoursAgo` DESC");
+			s = c.prepareStatement("SELECT ROUND((UNIX_TIMESTAMP(?)-UNIX_TIMESTAMP(`start`))/3600) AS `hoursAgo`,`count` FROM `counts` WHERE `place`=? AND `start` > DATE_SUB(?,INTERVAL ? HOUR) AND start < ?  UNION SELECT 0 AS `hoursAgo`,`count` FROM `nowcounts` WHERE `place` = ? ORDER BY `hoursAgo` DESC");
 			s.setTimestamp(1, currentTimeSql);
 			s.setInt(2, id);
 			s.setTimestamp(3, currentTimeSql);
-			s.setTimestamp(4, currentTimeSql);
-			s.setInt(5, id);
+			s.setInt(4, hoursMentions - 1);
+			s.setTimestamp(5, currentTimeSql);
+			s.setInt(6, id);
 			rs = s.executeQuery();
 			while (rs.next()) {
 				mentions.put(rs.getInt("hoursAgo"), rs.getInt("count"));
@@ -81,7 +95,11 @@ public class Place {
 				log.warn("Failed to clean up after statement", e);
 			}
 		}
-		return mentions;
+		long[] mArr = new long[hoursMentions];
+		for (Entry<Integer, Integer> e : mentions.entrySet()) {
+			mArr[e.getKey()] = e.getValue();
+		}
+		return mArr;
 	}
 
 	@Override
@@ -137,9 +155,9 @@ public class Place {
 				rs.getDouble("lat"), rs.getDouble("lng"));
 	}
 
-	public static List<Place> loadPopularPlaces(long minMentions,
+	public static List<PopularPlace> loadPopularPlaces(long minMentions,
 			long mentionDays) {
-		List<Place> places = new ArrayList<Place>();
+		List<PopularPlace> places = new ArrayList<PopularPlace>();
 		Connection c = null;
 		PreparedStatement s = null;
 		ResultSet rs = null;
@@ -151,7 +169,7 @@ public class Place {
 			rs = s.executeQuery();
 
 			while (rs.next()) {
-				places.add(fromSqlResult(rs));
+				places.add(new PopularPlace(fromSqlResult(rs)));
 			}
 
 		} catch (SQLException e) {
@@ -174,10 +192,16 @@ public class Place {
 			}
 		}
 
+		Collections.sort(places, new Comparator<PopularPlace>() {
+			@Override
+			public int compare(PopularPlace arg0, PopularPlace arg1) {
+				return Double.compare(arg0.rank, arg1.rank) * -1;
+			}
+		});
 		return places;
 	}
 
-	public List<Message> loadRecentMessages(int numMessages, int threshold) {
+	public List<Message> loadRecentMessages(int numMessages, double threshold) {
 		List<Message> messages = new ArrayList<Message>();
 		Connection c = null;
 		PreparedStatement s = null;
@@ -186,7 +210,7 @@ public class Place {
 			c = Utils.getConnection();
 			s = c.prepareStatement("SELECT * FROM `messages` WHERE MATCH (`text`) AGAINST (? IN NATURAL LANGUAGE MODE) > ? ORDER BY `created` DESC LIMIT ?");
 			s.setString(1, name);
-			s.setInt(2, threshold);
+			s.setDouble(2, threshold);
 			s.setInt(3, numMessages);
 			rs = s.executeQuery();
 
@@ -216,5 +240,4 @@ public class Place {
 
 		return messages;
 	}
-
 }

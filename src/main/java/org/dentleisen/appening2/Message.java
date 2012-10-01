@@ -176,4 +176,15 @@ public class Message {
 	public static void main(String[] args) {
 		log.info(Message.messagesCount("hard rock cafe", 12.0));
 	}
+
+	@SuppressWarnings("unchecked")
+	public Object toJSON() {
+		JSONObject msgObj = new JSONObject();
+		msgObj.put("id", getId());
+		msgObj.put("created",
+				Utils.jsonDateFormat.format(getCreated()));
+		msgObj.put("user", getUser());
+		msgObj.put("text", getText());
+		return msgObj;
+	}
 }

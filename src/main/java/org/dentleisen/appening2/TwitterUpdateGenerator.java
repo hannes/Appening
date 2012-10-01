@@ -1,9 +1,6 @@
 package org.dentleisen.appening2;
 
-import java.util.Calendar;
 import java.util.List;
-import java.util.Map;
-import java.util.TimeZone;
 import java.util.Timer;
 import java.util.TimerTask;
 
@@ -40,14 +37,19 @@ public class TwitterUpdateGenerator {
 	private static final long interval = Utils
 			.getCfgInt("appening.twitter.intervalSeconds") * 1000;
 
+	private static final double minRank = Utils
+			.getCfgDbl("appening.twitter.minRank");
+
+	private static final double lastMentionedMins = Utils
+			.getCfgDbl("appening.twitter.lastMentionedMins");
+
 	public static void main(String[] args) {
-		
-		 ConfigurationBuilder cb = new ConfigurationBuilder();
-	        cb.setDebugEnabled(false)
-	                .setOAuthConsumerKey(consumerKey)
-	                .setOAuthConsumerSecret(consumerSecret)
-	                .setOAuthAccessToken(accessToken)
-	                .setOAuthAccessTokenSecret(accessSecret);
+
+		ConfigurationBuilder cb = new ConfigurationBuilder();
+		cb.setDebugEnabled(false).setOAuthConsumerKey(consumerKey)
+				.setOAuthConsumerSecret(consumerSecret)
+				.setOAuthAccessToken(accessToken)
+				.setOAuthAccessTokenSecret(accessSecret);
 
 		TwitterFactory factory = new TwitterFactory(cb.build());
 		final Twitter twitter = factory.getInstance();
@@ -57,27 +59,30 @@ public class TwitterUpdateGenerator {
 			@Override
 			public void run() {
 				try {
-					List<Place> places = Place.loadPopularPlaces(minMentions,
-							minMentionsDays);
-					for (Place p : places) {
-						if (p.id != 663) {
+					log.info("Checking for places to push to feed...");
+					List<PopularPlace> places = Place.loadPopularPlaces(
+							minMentions, minMentionsDays);
+					for (PopularPlace p : places) {
+						if (p.rank < minRank) {
+							log.debug("Ignoring " + p.name + " (" + p.id
+									+ ") - rank " + p.rank + " < " + minRank);
 							continue;
 						}
-						// recent mentions
-						Map<Integer, Integer> m = p.loadPlaceMentions(Calendar
-								.getInstance(TimeZone.getTimeZone("UTC"))
-								.getTime());
+						if (p.wasMentioned(lastMentionedMins)) {
+							log.debug("Ignoring " + p.name + " (" + p.id
+									+ ") - already mentioned in last "
+									+ lastMentionedMins + " minutes");
+							continue;
+						}
 
-						// TODO: generate trends in java already? stupid to have this both in js and java!
-						
-
-						StatusUpdate su = new StatusUpdate("Found buzz about " + p.name + " - " + urlPrefix
-								+ "#-" + p.id);
+						StatusUpdate su = new StatusUpdate(
+								"Appening detected buzz on '" + p.name + "' - "
+										+ urlPrefix + "#-" + p.id);
 						su.setLocation(new GeoLocation(p.lat, p.lng));
 						log.info(su);
 						twitter.updateStatus(su);
+						p.setMentioned();
 					}
-					log.info("Published to Twitter.");
 				} catch (Exception e) {
 					log.warn("Unable to update twitter feed", e);
 				}
