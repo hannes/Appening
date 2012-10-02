@@ -1,8 +1,6 @@
 package org.dentleisen.appening2;
 
 import java.beans.PropertyVetoException;
-import java.io.File;
-import java.io.FileWriter;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.UnsupportedEncodingException;
@@ -24,15 +22,6 @@ import org.apache.http.HttpResponse;
 import org.apache.http.client.methods.HttpGet;
 import org.apache.http.impl.client.DefaultHttpClient;
 import org.apache.log4j.Logger;
-import org.jets3t.service.S3ServiceException;
-import org.jets3t.service.ServiceException;
-import org.jets3t.service.acl.AccessControlList;
-import org.jets3t.service.acl.GroupGrantee;
-import org.jets3t.service.acl.Permission;
-import org.jets3t.service.impl.rest.httpclient.RestS3Service;
-import org.jets3t.service.model.S3Object;
-import org.jets3t.service.security.AWSCredentials;
-import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 import org.json.simple.parser.JSONParser;
 
@@ -201,73 +190,5 @@ public class Utils {
 			h[x] = points[x];
 		}
 		return h;
-	}
-
-	private static final String awsAccessKey = Utils
-			.getCfgStr("appening.export.awsAccessKey");
-	private static final String awsSecretKey = Utils
-			.getCfgStr("appening.export.awsSecretKey");
-	private static final String s3Bucket = Utils
-			.getCfgStr("appening.export.S3Bucket");
-	private static final String s3Prefix = Utils
-			.getCfgStr("appening.export.s3Prefix");
-
-	private static RestS3Service s3 = null;
-	private static AccessControlList bucketAcl = null;
-
-	private static String jsonArrToS3(JSONArray json, String s3Key) {
-		/*
-		 * File sTmpFile = new File(
-		 * "/Users/hannes/eclipse-ws/Appening/src/main/frontend/" + s3Key); try
-		 * { FileWriter sWriter = new FileWriter(sTmpFile);
-		 * json.writeJSONString(sWriter); sWriter.close();
-		 * 
-		 * } catch (IOException e1) { log.warn(e1); }
-		 * 
-		 * if (true) { return s3Key; }
-		 */
-
-		if (s3 == null) {
-			try {
-				s3 = new RestS3Service(new AWSCredentials(awsAccessKey,
-						awsSecretKey));
-				s3.getHttpClient().getParams()
-						.setParameter("http.protocol.content-charset", "UTF-8");
-			} catch (S3ServiceException e) {
-				log.warn("Unable to initialize S3 client", e);
-			}
-		}
-		if (bucketAcl == null) {
-			try {
-				bucketAcl = s3.getBucketAcl(s3Bucket);
-			} catch (ServiceException e) {
-				log.warn("Unable to update S3 Bucket ACL", e);
-			}
-			bucketAcl.grantPermission(GroupGrantee.ALL_USERS,
-					Permission.PERMISSION_READ);
-		}
-
-		try {
-			File tmpFile = File.createTempFile("appening-upload", ".json");
-			FileWriter writer = new FileWriter(tmpFile);
-			json.writeJSONString(writer);
-			writer.close();
-
-			S3Object dataFileObject = new S3Object(tmpFile);
-			dataFileObject.setKey(s3Key);
-			dataFileObject.setAcl(bucketAcl);
-			dataFileObject.setContentType("application/json");
-			dataFileObject.setContentEncoding("UTF-8");
-
-			s3.putObject(s3Bucket, dataFileObject);
-			tmpFile.delete();
-
-			return s3.createUnsignedObjectUrl(s3Bucket, s3Key, true, false,
-					false);
-		} catch (Exception e) {
-			log.warn("Unable to upload JSON to S3", e);
-		}
-
-		return "";
 	}
 }

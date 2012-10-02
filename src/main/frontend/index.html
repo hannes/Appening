@@ -147,7 +147,7 @@ else {
 }
     
  var line  = '<tr class="place" id="'+place.id+'">';
-    line += '<td>'+place.name+' <a href="#'+encodeURIComponent(place.name)+'-'+place.id+'">_</a></td>';
+    line += '<td>'+place.name+' <a href="#'+encodeURIComponent(place.name)+'-'+place.id+'"></a></td>';
     
 	// make copy here, because reverse operates in-place
 	var chartSeries = place.mentionsSeries.slice().reverse();

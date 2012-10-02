@@ -60,12 +60,16 @@ public class PopularPlace extends Place {
 	}
 
 	private static Popularity generatePopularity(long[] mentions, int hours) {
+		long[] subMntsArr = Utils.lastHours(mentions, hours);
+		return new Popularity(Utils.slope(subMntsArr), sum(subMntsArr));
+	}
+
+	private static long sum(long[] mentions) {
 		long mSum = 0;
 		for (int i = 0; i < mentions.length; i++) {
 			mSum += mentions[i];
 		}
-		return new Popularity(Utils.slope(Utils.lastHours(mentions, hours)),
-				mSum);
+		return mSum;
 	}
 
 	@SuppressWarnings("unchecked")
