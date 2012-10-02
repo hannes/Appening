@@ -6,7 +6,9 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
 import java.sql.Timestamp;
+import java.text.ParseException;
 import java.util.ArrayList;
+import java.util.Calendar;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.Date;
@@ -131,13 +133,13 @@ public class Place {
 	}
 
 	public static List<Place> loadPlaces() {
-		List<Place> messages = new ArrayList<Place>();
+		List<Place> places = new ArrayList<Place>();
 		try {
 			Connection c = Utils.getConnection();
 			Statement s = c.createStatement();
 			ResultSet rs = s.executeQuery("SELECT * FROM `places`");
 			while (rs.next()) {
-				messages.add(Place.fromSqlResult(rs));
+				places.add(Place.fromSqlResult(rs));
 			}
 
 			rs.close();
@@ -147,7 +149,7 @@ public class Place {
 			log.warn("Failed to load places from db", e);
 
 		}
-		return messages;
+		return places;
 	}
 
 	private static Place fromSqlResult(ResultSet rs) throws SQLException {
@@ -239,5 +241,57 @@ public class Place {
 		}
 
 		return messages;
+	}
+
+	public static List<PopularPlace> loadLastMentionedPlaces(long maxPlaces) {
+		List<PopularPlace> places = new ArrayList<PopularPlace>();
+		Connection c = null;
+		PreparedStatement s = null;
+		ResultSet rs = null;
+		try {
+			c = Utils.getConnection();
+			s = c.prepareStatement("SELECT `id`,`name`,`mentioned`,`lat`,`lng` FROM `placementioned` JOIN `places` ON `placementioned`.`place` = `places`.`id` ORDER BY `mentioned` DESC LIMIT ?;");
+			s.setLong(1, maxPlaces);
+			rs = s.executeQuery();
+
+			while (rs.next()) {
+
+				Date d = Calendar.getInstance().getTime();
+				try {
+					d = Utils.sqlDateTimeFormat
+							.parse(rs.getString("mentioned"));
+				} catch (ParseException e) {
+					log.warn("Unable to parse date", e);
+				}
+				places.add(new PopularPlace(fromSqlResult(rs), d));
+			}
+
+		} catch (SQLException e) {
+			log.warn("Failed to run statement", e);
+		} finally {
+			try {
+				rs.close();
+			} catch (SQLException e) {
+				log.warn("Failed to clean up after statement", e);
+			}
+			try {
+				s.close();
+			} catch (SQLException e) {
+				log.warn("Failed to clean up after statement", e);
+			}
+			try {
+				c.close();
+			} catch (SQLException e) {
+				log.warn("Failed to clean up after statement", e);
+			}
+		}
+
+		Collections.sort(places, new Comparator<PopularPlace>() {
+			@Override
+			public int compare(PopularPlace arg0, PopularPlace arg1) {
+				return arg0.lastMentioned.compareTo(arg1.lastMentioned) * -1;
+			}
+		});
+		return places;
 	}
 }

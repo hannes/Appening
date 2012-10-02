@@ -6,6 +6,7 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Calendar;
+import java.util.Date;
 import java.util.List;
 import java.util.TimeZone;
 
@@ -37,11 +38,13 @@ public class PopularPlace extends Place {
 	public Popularity popularity6h;
 	public Popularity popularity3h;
 
+	public Date lastMentioned;
+
 	public double rank = 0;
 
 	public long[] mentions;
 
-	PopularPlace(Place p) {
+	public PopularPlace(Place p) {
 		super(p);
 		mentions = this.loadPlaceMentions(Calendar.getInstance(
 				TimeZone.getTimeZone("UTC")).getTime());
@@ -56,7 +59,11 @@ public class PopularPlace extends Place {
 			rank = popularity6h.mentions * popularity6h.slope + 5
 					* popularity3h.mentions * popularity3h.slope;
 		}
+	}
 
+	public PopularPlace(Place p, Date mentioned) {
+		this(p);
+		this.lastMentioned = mentioned;
 	}
 
 	private static Popularity generatePopularity(long[] mentions, int hours) {
