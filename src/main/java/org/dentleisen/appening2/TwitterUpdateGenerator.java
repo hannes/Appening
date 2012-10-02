@@ -76,10 +76,10 @@ public class TwitterUpdateGenerator {
 						}
 
 						StatusUpdate su = new StatusUpdate(
-								"Appening detected buzz on '" + p.name + "' - "
-										+ urlPrefix + "#-" + p.id);
+								"'" + p.name + "' - "
+										+ urlPrefix + "#-" + p.id + " (" + p.rank+")");
 						su.setLocation(new GeoLocation(p.lat, p.lng));
-						log.info(su);
+						log.info(su.getStatus());
 						twitter.updateStatus(su);
 						p.setMentioned();
 					}

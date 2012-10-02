@@ -129,7 +129,7 @@ function linkify(text) {
 $.getJSON('data/places.json', function(data) {
 
   var items = [];
-$('#map_canvas').gmap();
+$('#map_canvas').gmap({ 'center': '52.3741,4.897' });
 
 $.each(data,function(index,place) {
 
