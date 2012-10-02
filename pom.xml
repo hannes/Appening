@@ -99,8 +99,8 @@
 				<enabled>true</enabled>
 			</snapshots>
 		</repository>
-		
-				<repository>
+
+		<repository>
 			<name>jets3t</name>
 			<id>jets3t</id>
 			<url>http://www.jets3t.org/maven2</url>
@@ -109,6 +109,12 @@
 	</repositories>
 
 	<dependencies>
+		<dependency>
+			<groupId>com.amazonaws</groupId>
+			<artifactId>aws-java-sdk</artifactId>
+			<version>1.3.18</version>
+		</dependency>
+
 		<dependency>
 			<groupId>org.twitter4j</groupId>
 			<artifactId>twitter4j-core</artifactId>
@@ -120,12 +126,12 @@
 			<artifactId>twitter4j-stream</artifactId>
 			<version>3.0.0-SNAPSHOT</version>
 		</dependency>
-		
-				<dependency>
+
+		<dependency>
 			<groupId>net.java.dev.jets3t</groupId>
 			<artifactId>jets3t</artifactId>
 			<version>0.9.0</version>
-			
+
 		</dependency>
 
 		<dependency>
@@ -154,11 +160,8 @@
 			<version>1.2.16</version>
 		</dependency>
 
-		<!-- <dependency>
-			<groupId>org.apache.httpcomponents</groupId>
-			<artifactId>httpclient</artifactId>
-			<version>4.0.1</version>
-		</dependency> -->
+		<!-- <dependency> <groupId>org.apache.httpcomponents</groupId> <artifactId>httpclient</artifactId> 
+			<version>4.0.1</version> </dependency> -->
 
 		<dependency>
 			<groupId>mysql</groupId>

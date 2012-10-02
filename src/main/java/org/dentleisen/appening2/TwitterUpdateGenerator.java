@@ -75,9 +75,9 @@ public class TwitterUpdateGenerator {
 							continue;
 						}
 
-						StatusUpdate su = new StatusUpdate(
-								"'" + p.name + "' - "
-										+ urlPrefix + "#-" + p.id + " (" + p.rank+")");
+						StatusUpdate su = new StatusUpdate("'" + p.name
+								+ "' - " + urlPrefix + "#-" + p.id + " ("
+								+ Math.round(p.rank) + ")");
 						su.setLocation(new GeoLocation(p.lat, p.lng));
 						log.info(su.getStatus());
 						twitter.updateStatus(su);

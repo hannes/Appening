@@ -1,4 +1,4 @@
-appening.db.url = jdbc:mysql://localhost:3306/appening2?useUnicode=true&characterEncoding=utf8
+appening.db.url = jdbc:mysql://localhost:3306/appening?useUnicode=true&characterEncoding=utf8
 appening.db.user = root
 appening.db.password = 
 
@@ -11,7 +11,7 @@ appening.export.intervalSeconds = 300
 appening.export.minMentions = 10
 appening.export.minMentionDays = 7
 appening.export.recentMessages = 10
-appening.export.awsAccessKey = 057HCHYZ9K281FT0MR82
+appening.export.awsAccessKey = 
 appening.export.awsSecretKey = 
 appening.export.S3Bucket = www.appening.at
 appening.export.s3Prefix = data/
@@ -19,10 +19,10 @@ appening.export.s3Prefix = data/
 appening.twitter.minMentions = 10
 appening.twitter.minMentionDays = 7
 appening.twitter.urlPrefix = http://www.appening.at/
-appening.twitter.accessToken = 850897550-NEYhHsJOXGmleAuBh1WBsuNh5QG3FvSiUxfnktns
-appening.twitter.accessSecret = 0aEuyIwH7CSiiaBRLTLKiG6y79wVz7bBbgkVfOYjQ
-appening.twitter.consumerKey = Z3ldRkn5PuIPTUj8qk6yow
-appening.twitter.consumerSecret = 92mTbQ3taiFy7od9wJQL8eeT9FvjDRvQ7lyva8lD4Cg
+appening.twitter.accessToken = 
+appening.twitter.accessSecret = 
+appening.twitter.consumerKey = 
+appening.twitter.consumerSecret = 
 appening.twitter.intervalSeconds = 600
 appening.twitter.lastMentionedMins = 120
 appening.twitter.minRank = 10

@@ -1,7 +1,6 @@
 package org.dentleisen.appening2;
 
-import java.io.File;
-import java.io.FileWriter;
+import java.nio.charset.Charset;
 import java.util.List;
 import java.util.Timer;
 import java.util.TimerTask;
@@ -17,6 +16,8 @@ import org.jets3t.service.model.S3Object;
 import org.jets3t.service.security.AWSCredentials;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
+
+import com.amazonaws.util.StringInputStream;
 
 public class JsonExporter {
 
@@ -42,6 +43,8 @@ public class JsonExporter {
 	private static final int numMessages = 20;
 
 	public static void main(String[] args) {
+		log.info("Twitter Exporter starting, charset="
+				+ Charset.defaultCharset() + ", interval=" + interval);
 		try {
 
 			Timer t = new Timer();
@@ -116,19 +119,14 @@ public class JsonExporter {
 		}
 
 		try {
-			File tmpFile = File.createTempFile("appening-upload", ".json");
-			FileWriter writer = new FileWriter(tmpFile);
-			json.writeJSONString(writer);
-			writer.close();
-
-			S3Object dataFileObject = new S3Object(tmpFile);
-			dataFileObject.setKey(s3Key);
+			S3Object dataFileObject = new S3Object(s3Key, json.toJSONString());
+			dataFileObject.setDataInputStream(new StringInputStream(json
+					.toJSONString()));
 			dataFileObject.setAcl(bucketAcl);
 			dataFileObject.setContentType("application/json");
 			dataFileObject.setContentEncoding("UTF-8");
 
 			s3.putObject(s3Bucket, dataFileObject);
-			tmpFile.delete();
 
 			return s3.createUnsignedObjectUrl(s3Bucket, s3Key, true, false,
 					false);
