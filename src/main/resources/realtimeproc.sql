@@ -62,4 +62,4 @@ DELIMITER ;
 -- scheduler config
 
 SET GLOBAL event_scheduler = ON;
-CREATE EVENT `generateRealtimeEvent` ON SCHEDULE EVERY 5 MINUTE DO CALL generateRealtimeProc();     
+CREATE EVENT `generateRealtimeEvent` ON SCHEDULE EVERY 15 MINUTE DO CALL generateRealtimeProc();     

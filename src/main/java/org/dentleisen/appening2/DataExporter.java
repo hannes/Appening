@@ -54,6 +54,104 @@ public class DataExporter {
 
 	private static final int numMessages = 20;
 
+	public static void runTask() {
+		exportRSS();
+		exportJson();
+	}
+
+	public static void exportRSS() {
+		try {
+			SyndFeed feed = new SyndFeedImpl();
+			feed.setFeedType("rss_2.0");
+			feed.setLink("http://www.appening.at");
+			feed.setTitle("Appening Amsterdam");
+			feed.setDescription("Things happening now in Amsterdam according to Twitter.");
+			List<PopularPlace> places = Place.loadLastMentionedPlaces(50);
+			List<SyndEntry> entries = new ArrayList<SyndEntry>();
+
+			for (PopularPlace p : places) {
+				SyndEntry entry = new SyndEntryImpl();
+				SyndContent description;
+
+				entry.setTitle(p.name);
+				String link = urlPrefix + "#"
+						+ URLEncoder.encode(p.name, "UTF-8") + "-"
+						+ Long.toHexString(p.lastMentioned.getTime()) + "-"
+						+ p.id;
+
+				entry.setLink(link);
+
+				entry.setPublishedDate(p.lastMentioned);
+				description = new SyndContentImpl();
+				description.setType("text/html");
+
+				String html = "<ul><li><a href=\""
+						+ link
+						+ "\">Appening page for place</a></li><li><a href=\"https://maps.google.com/maps?t=h&q=loc:"
+						+ p.lat + "," + p.lng
+						+ "&z=17\">Google Maps</a></li></ul><br /><ul>";
+				List<Message> recentMessages = p.loadRecentMessages(
+						numMessages, Utils.messageThreshold);
+
+				for (Message m : recentMessages) {
+					html += "<li>"
+							+ Utils.linkify("@" + m.getUser() + ": "
+									+ m.getText()) + "</li>";
+				}
+
+				html += "</ul>";
+
+				description.setValue(html);
+
+				entry.setDescription(description);
+				entries.add(entry);
+			}
+
+			feed.setEntries(entries);
+			SyndFeedOutput output = new SyndFeedOutput();
+			String rss = output.outputString(feed);
+
+			stringToS3(rss, s3Prefix + "feed.rss", "application/rss+xml");
+
+			log.info("RSS feed uploaded");
+		} catch (Exception e) {
+			log.warn("Unable to create and upload RSS feed", e);
+		}
+	}
+
+	@SuppressWarnings("unchecked")
+	public static void exportJson() {
+		JSONArray json = new JSONArray();
+
+		try {
+			List<PopularPlace> places = Place.loadPopularPlaces(minMentions,
+					minMentionsDays);
+			for (PopularPlace p : places) { // upload recent twitter
+				// messages so we can display them
+				JSONArray messages = new JSONArray();
+				List<Message> recentMessages = p.loadRecentMessages(
+						numMessages, Utils.messageThreshold);
+				for (Message msg : recentMessages) {
+					messages.add(msg.toJSON());
+				}
+
+				String messagesJsonUrl = jsonArrToS3(messages, s3Prefix + p.id
+						+ "-messages.json");
+
+				// add reference to messages JSON to place so we can
+				// load it from GUI
+				JSONObject pj = p.toJSON();
+				pj.put("messagesUrl", messagesJsonUrl);
+				json.add(pj);
+			}
+			jsonArrToS3(json, s3Prefix + "places.json");
+
+			log.info("Created JSON & uploaded to S3");
+		} catch (Exception e) {
+			log.warn("Unable to create and upload json file", e);
+		}
+	}
+
 	public static void main(String[] args) {
 		log.info("Data Exporter starting, charset=" + Charset.defaultCharset()
 				+ ", interval=" + interval);
@@ -61,117 +159,17 @@ public class DataExporter {
 
 			Timer t = new Timer();
 			TimerTask tt = new TimerTask() {
-				@SuppressWarnings("unchecked")
 				@Override
 				public void run() {
-
-					// now the rss feed...
-
-					try {
-						SyndFeed feed = new SyndFeedImpl();
-						feed.setFeedType("rss_2.0");
-						feed.setLink("http://www.appening.at");
-						feed.setTitle("Appening Amsterdam");
-						feed.setDescription("Things happening now in Amsterdam according to Twitter.");
-						List<PopularPlace> places = Place
-								.loadLastMentionedPlaces(50);
-						List<SyndEntry> entries = new ArrayList<SyndEntry>();
-
-						for (PopularPlace p : places) {
-							SyndEntry entry = new SyndEntryImpl();
-							SyndContent description;
-
-							entry.setTitle(p.name);
-							String link = urlPrefix
-									+ "#"
-									+ URLEncoder.encode(p.name, "UTF-8")
-									+ "-"
-									+ Long.toHexString(p.lastMentioned
-											.getTime()) + "-" + p.id;
-
-							entry.setLink(link);
-
-							entry.setPublishedDate(p.lastMentioned);
-							description = new SyndContentImpl();
-							description.setType("text/html");
-
-							String html = "<ul><li><a href=\""
-									+ link
-									+ "\">Appening page for place</a></li><li><a href=\"https://maps.google.com/maps?t=h&q=loc:"
-									+ p.lat
-									+ ","
-									+ p.lng
-									+ "&z=17\">Google Maps</a></li></ul><br /><ul>";
-							List<Message> recentMessages = p
-									.loadRecentMessages(numMessages,
-											Utils.messageThreshold);
-
-							for (Message m : recentMessages) {
-								html += "<li>"
-										+ Utils.linkify("@"+m.getUser() + ": "
-												+ m.getText()) + "</li>";
-							}
-
-							html += "</ul>";
-
-							description.setValue(html);
-
-							entry.setDescription(description);
-							entries.add(entry);
-						}
-
-						feed.setEntries(entries);
-						SyndFeedOutput output = new SyndFeedOutput();
-						String rss = output.outputString(feed);
-
-						stringToS3(rss, s3Prefix + "feed.rss",
-								"application/rss+xml");
-
-						log.info("RSS feed uploaded");
-					} catch (Exception e) {
-						log.warn("Unable to create and upload RSS feed", e);
-					}
-
-					JSONArray json = new JSONArray();
-
-					try {
-						List<PopularPlace> places = Place.loadPopularPlaces(
-								minMentions, minMentionsDays);
-						for (PopularPlace p : places) { // upload recent twitter
-							// messages so we can display them
-							JSONArray messages = new JSONArray();
-							List<Message> recentMessages = p
-									.loadRecentMessages(numMessages,
-											Utils.messageThreshold);
-							for (Message msg : recentMessages) {
-								messages.add(msg.toJSON());
-							}
-
-							String messagesJsonUrl = jsonArrToS3(messages,
-									s3Prefix + p.id + "-messages.json");
-
-							// add reference to messages JSON to place so we can
-							// load it from GUI
-							JSONObject pj = p.toJSON();
-							pj.put("messagesUrl", messagesJsonUrl);
-							json.add(pj);
-						}
-						jsonArrToS3(json, s3Prefix + "places.json");
-
-						log.info("Created JSON & uploaded to S3");
-					} catch (Exception e) {
-						log.warn("Unable to create and upload json file", e);
-					}
-
+					runTask();
 				}
 			};
 			t.scheduleAtFixedRate(tt, 0, interval);
 
 		} catch (Exception e) {
-			log.error("Unable to use S3, exiting", e);
+			log.error("Unable to use data exporter, exiting", e);
 			System.exit(-1);
 		}
-
 	}
 
 	private static RestS3Service s3 = null;
@@ -210,7 +208,7 @@ public class DataExporter {
 			dataFileObject.setContentEncoding("UTF-8");
 
 			s3.putObject(s3Bucket, dataFileObject);
-			log.info("Uploaded to " + s3Key);
+			log.debug("Uploaded to " + s3Key);
 			return s3.createUnsignedObjectUrl(s3Bucket, s3Key, true, false,
 					false);
 		} catch (Exception e) {

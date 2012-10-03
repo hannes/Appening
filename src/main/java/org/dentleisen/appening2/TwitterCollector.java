@@ -33,15 +33,19 @@ public class TwitterCollector {
 		TimerTask tt = new TimerTask() {
 			@Override
 			public void run() {
-				List<Message> msgs = loadMessages(Message.getLastId(),
-						circleCenterLat, circleCenterLng, circleRadiusKm);
-				log.info("Loaded " + msgs.size() + " msgs");
-				for (Message m : msgs) {
-					m.save();
-				}
+				runTask();
 			}
 		};
 		t.scheduleAtFixedRate(tt, 0, interval);
+	}
+	
+	public static void runTask() {
+		List<Message> msgs = loadMessages(Message.getLastId(),
+				circleCenterLat, circleCenterLng, circleRadiusKm);
+		log.info("Loaded " + msgs.size() + " msgs");
+		for (Message m : msgs) {
+			m.save();
+		}
 	}
 
 	public static List<Message> loadMessages(String lastId, double lat,
