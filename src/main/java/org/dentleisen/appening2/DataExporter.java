@@ -82,9 +82,12 @@ public class DataExporter {
 							SyndContent description;
 
 							entry.setTitle(p.name);
-							String link = urlPrefix + "#"
-									+ URLEncoder.encode(p.name, "UTF-8") + "-"
-									+ p.id;
+							String link = urlPrefix
+									+ "#"
+									+ URLEncoder.encode(p.name, "UTF-8")
+									+ "-"
+									+ Long.toHexString(p.lastMentioned
+											.getTime()) + "-" + p.id;
 
 							entry.setLink(link);
 
@@ -104,8 +107,9 @@ public class DataExporter {
 											Utils.messageThreshold);
 
 							for (Message m : recentMessages) {
-								html += "<li>" + Utils.linkify(m.getText())
-										+ "</li>";
+								html += "<li>"
+										+ Utils.linkify("@"+m.getUser() + ": "
+												+ m.getText()) + "</li>";
 							}
 
 							html += "</ul>";

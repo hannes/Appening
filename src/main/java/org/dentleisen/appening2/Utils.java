@@ -182,7 +182,7 @@ public class Utils {
 			}
 		}
 		return h;
-	}
+	}	
 
 	public static long[] fillField(long[] points, int numHours) {
 		long[] h = { 0 };
@@ -195,9 +195,9 @@ public class Utils {
 	public static String linkify(String text) {
 		text = text.replaceAll("(?iu)(https?://\\S+)", "<a href=\"$1\">$1</a>");
 		text = text.replaceAll("(?iu)(^|)@(\\w+)",
-				"<a href=\"http://twitter.com/$2\">$2</a>");
+				"<a href=\"http://twitter.com/$2\">@$2</a>");
 		text = text.replaceAll("(?iu)(^|)#(\\w+)",
-				"<a href=\"http://search.twitter.com/search?q=$2\">$2</a>");
+				"<a href=\"http://search.twitter.com/search?q=$2\">#$2</a>");
 		return text;
 	}
 }

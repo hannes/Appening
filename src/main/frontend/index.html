@@ -20,18 +20,10 @@
     </div>
 
     <div class="container">
-
 		<div id="map_canvas" style="width: auto; height: 300px;"></div>
-
-
 		<table id="places" class="table">
 		</table>
-		
-		
-		
     </div> 
-
-
 
 <script type="text/javascript" src="http://maps.google.com/maps/api/js?sensor=true"></script>
 <script type="text/javascript" src="http://ajax.googleapis.com/ajax/libs/jquery/1.7/jquery.min.js"></script>
@@ -45,53 +37,6 @@ var idregex = /-([\d]+)$/;
 var showPlaceId = undefined;
 if (idregex.test(hash)) {
 	showPlaceId = hash.match(idregex)[1];
-}
-
-function slope(pointsArr) {	
-	if (pointsArr.length < 2) {
-		return 0;
-	}
-		
-	// fitted curve: y=a+b*x
-	// a= (sum(y)*sum(x^2) - sum(x)*sum(x*y))  / (n*sum(x^2)-(sum(x))^2)
-	// b = (n*sum(x*y) - sum(x)*sum(y)) / (n*sum(x^2)-(sum(x))^2)
-	
-	// http://www.efunda.com/math/leastsquares/lstsqr1dcurve.cfm
-	var sx2 = 0;
-	var sx = 0;
-	var sy = 0;
-	var sxy = 0;
-	var n = pointsArr.length;
-    $.each(pointsArr,function(x,y){
-    	sx2+=Math.pow(x,2);
-    	sx+=x;
-    	sy+=y;
-    	sxy+=x*y;
-    });
-
-	var denom = n*sx2-Math.pow(sx,2);
-	//$a = ($sy*sx2 - $sx*$sxy) / $denom; // not interesting?
-	var b = (n*sxy - sx*sy) / denom;
-	return b;
-}
-
-
-function lastHours(pointsArr,maxHours) {
-	var h = [];
-	 $.each(pointsArr,function(x,y){
-	 	if (x < maxHours) {
-	 		h[x] = y;
-	 	}
-	 });
-	return h;
-}
-
-function generateTrend(pointsArr,maxHours) {
- 	var data = lastHours(pointsArr,maxHours);
-    var s = slope(data);
-    var n = 0;
-    $.each(data,function(x,y){n+=y});
-	return {'n':n,'s':s};
 }
 
 function trendFigure(trend) {
