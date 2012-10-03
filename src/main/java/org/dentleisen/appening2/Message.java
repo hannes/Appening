@@ -54,7 +54,7 @@ public class Message {
 		try {
 			Connection c = Utils.getConnection();
 			PreparedStatement s = c
-					.prepareStatement("INSERT IGNORE INTO `messages` (`id`,`created`,`user`,`text`) VALUES (?,?,?,?)");
+					.prepareStatement("INSERT DELAYED IGNORE INTO `messages` (`id`,`created`,`user`,`text`) VALUES (?,?,?,?)");
 
 			s.setString(1, getId());
 			s.setString(2, Utils.sqlDateTimeFormat.format(getCreated()));
