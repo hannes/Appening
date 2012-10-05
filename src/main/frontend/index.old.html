@@ -1,0 +1,185 @@
+<!DOCTYPE html> 
+<html><head><title>Appening Amsterdam</title>
+	<meta charset="utf-8">
+    <link href="bootstrap.min.css" rel="stylesheet">
+       <style>
+      body {
+        padding-top: 60px; /* 60px to make the container go all the way to the bottom of the topbar */
+      }
+    </style>
+</head>
+
+<body>
+
+  <div class="navbar navbar-inverse navbar-fixed-top">
+      <div class="navbar-inner">
+        <div class="container">
+          <a class="brand" href="#">Appening Amsterdam</a>
+        </div>
+      </div>
+    </div>
+
+    <div class="container">
+		<div id="map_canvas" style="width: auto; height: 300px;"></div>
+		<table id="places" class="table">
+		</table>
+    </div> 
+
+<script type="text/javascript" src="http://maps.google.com/maps/api/js?sensor=true"></script>
+<script type="text/javascript" src="http://ajax.googleapis.com/ajax/libs/jquery/1.7/jquery.min.js"></script>
+<script type="text/javascript" src="jquery.ui.map.min.js"></script>
+
+<script src="bootstrap.min.js"></script>
+	
+<script type="text/javascript">
+var hash = window.location.hash;
+var idregex = /-([\d]+)$/;
+var showPlaceId = undefined;
+if (idregex.test(hash)) {
+	showPlaceId = hash.match(idregex)[1];
+}
+
+function trendFigure(trend) {
+    var s = trend.s;
+    var n = trend.n;
+    
+    if (n < 2) {
+    	return '<td style="color:gray;">-</td>';
+    }
+    var color = 'black';
+    var prefix = '+';
+    if  (s <0) {
+		color = 'red';
+		prefix = ''
+    }
+    
+    return '<td><span style="color:'+color+';">'+prefix+''+s.toFixed(2)+'</span> <small>(n='+n+')</small></td>';
+}
+
+function linkify(text) {
+    text = text.replace(/(https?:\/\/\S+)/gi, function (s) {
+        return '<a href="' + s + '">' + s + '</a>';
+    });
+
+    text = text.replace(/(^|)@(\w+)/gi, function (s) {
+        return '<a href="http://twitter.com/' + s + '">' + s + '</a>';
+    });
+
+    text = text.replace(/(^|)#(\w+)/gi, function (s) {
+        return '<a href="http://search.twitter.com/search?q=' + s.replace(/#/,'%23') + '">' + s + '</a>';
+     });
+    return text;
+}
+
+
+(function worker() {
+$.getJSON('data/places.json', function(data) {
+
+  var items = [];
+$('#map_canvas').gmap({ 'center': '52.3741,4.897' });
+
+$.each(data,function(index,place) {
+
+
+
+if (showPlaceId != undefined) {
+	if (place.id != showPlaceId) {
+		return;
+	}
+}
+else {
+	if (place.sum < 10 || place.trend.rank <= 1) {
+			return;
+	}
+}
+    
+ var line  = '<tr class="place" id="'+place.id+'">';
+    line += '<td>'+place.name+' <a href="#'+encodeURIComponent(place.name)+'-'+place.id+'"></a></td>';
+    
+	// make copy here, because reverse operates in-place
+	var chartSeries = place.mentionsSeries.slice().reverse();
+    line += '<td><img src="http://chart.googleapis.com/chart?cht=ls&chxr=0,0,72&chxs=0,676767,0,0,_,676767&chm=D,0033FF,0,0,1,1&chs=200x50&chds=a&chd=t:'+ chartSeries.join(',') +'&chxt=x,y" /></td>';
+    
+    
+    line += trendFigure(place.trend.h48);
+    line += trendFigure(place.trend.h24);
+    line += trendFigure(place.trend.h12);
+    line += trendFigure(place.trend.h6);
+	line += trendFigure(place.trend.h3);
+
+   line += '<td>'+place.trend.rank.toFixed(2)+'</td>';
+
+    line += '</tr>';
+    
+    
+    $('#map_canvas').gmap('addMarker', { 
+				'position': new google.maps.LatLng(place.lat, place.lng), 
+				'bounds': true,
+				'id':place.id 
+			}).click(function() {
+				/*$('#map_canvas').gmap('openInfoWindow', { 'content': place.name }, this);*/
+				$('#'+place.id).trigger('click');
+		});
+			
+			
+
+    items.push(line);
+
+});
+
+if (items.length > 0) {
+ $('#places').html('<tr><th>Place</th><th>48h-Plot</th><th>48h</th><th>24h</th><th>12h</th><th>6h</th><th>3h</th><th>Rank</th></tr>'+items.join('\n'));
+
+
+$('.place').click(function(){
+	var ele = this;
+
+	if ($('#tweets-' + ele.id).length > 0) {
+		$('#tweets-' + ele.id).remove();
+		
+		$('#map_canvas').gmap('find', 'markers', { 'property': 'id', 'value': ele.id }, function(marker, isFound) {
+                 if ( marker.id == ele.id ) {
+					marker.setIcon('');
+                } 
+        });
+		return;
+	}
+
+ $('#map_canvas').gmap('find', 'markers', { 'property': 'id', 'value': ele.id }, function(marker, isFound) {
+                 if ( marker.id == ele.id ) {
+					marker.setIcon('blue_MarkerA.png');
+					marker.setVisible(true);
+                } 
+        });
+        
+        
+	$.getJSON('data/'+ele.id+'-messages.json', function(data) {
+		var msgs = [];
+		$.each(data,function(index,message) {
+			msgs.push(linkify('@'+message.user + ': ' +message.text));
+		});
+		$('<tr id="tweets-'+ele.id+'"><td colspan="100">'+msgs.join('<br>')+'</td></tr>').insertAfter($(ele).closest('tr'));
+		
+	});
+});
+
+if (showPlaceId != undefined) {
+	$('#'+showPlaceId).trigger('click');
+}
+
+}
+else {
+ 	 $('#places').html('<tr><td>Sorry, nothing "appening" right now! Come back later...</td></tr>');
+ }
+     setTimeout(worker, 1*60*1000); // 1 min
+
+});
+})();
+
+
+            
+</script>
+
+</body>
+</html>
+
