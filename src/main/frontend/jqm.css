@@ -2,6 +2,10 @@
 	display:none;
 }
 
+.ui-icon-appening-location {
+	background-image: url("icon-location.png");
+}
+
 @media all and (min-width: 1000px){
 
 #map_canvas {

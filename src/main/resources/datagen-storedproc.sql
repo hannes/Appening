@@ -42,7 +42,6 @@ OPEN `placesCursor`;
 	
 	IF EXISTS(SELECT `updated` FROM `placeupdate` WHERE `place`=`pid`) THEN
 		SELECT `updated` INTO `curHour` FROM `placeupdate` WHERE `place`=`pid`;
-		DELETE FROM `placeupdate` WHERE `place`=`pid`;
 	ELSE
 		SET `curHour`= `minHour`;
 	END IF;
@@ -58,7 +57,12 @@ OPEN `placesCursor`;
 		SET `curHour` = `endHour`;	
 	END WHILE;
 	
-	INSERT INTO `placeupdate` (`place`,`updated`) VALUES (`pid`,`maxHour`);
+	
+	IF EXISTS(SELECT `updated` FROM `placeupdate` WHERE `place`=`pid`) THEN
+		UPDATE `placeupdate` SET `updated`=`maxHour` WHERE `place`=`pid`;
+	ELSE
+		INSERT INTO `placeupdate` (`place`,`updated`) VALUES (`pid`,`maxHour`);
+	END IF;
 	
 END LOOP;
 CLOSE `placesCursor`;
