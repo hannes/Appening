@@ -68,7 +68,7 @@ function geoSuccess(position) {
 				position.coords.longitude, place.lat, place.lng);
 		distStr = distance.toFixed(1) + 'km';
 		if (distance < 1) {
-			distStr = Math.round(distStr * 1000) + 'm';
+			distStr = Math.round(distance * 1000) + 'm';
 		}
 		$('#' + place.id + ' .distance').text(distStr);
 	});
