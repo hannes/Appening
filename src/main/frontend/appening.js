@@ -80,7 +80,7 @@ function pageUpdater() {
 
 		$('#places').data('places', data);
 		$.each(data, function(index, place) {
-			if (place.trend.rank < 1) {
+			if (place.trend.rank < 1 && place.id != showPlaceId) {
 				return;
 			}
 			items.push(generateHtml(place));

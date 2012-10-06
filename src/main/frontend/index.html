@@ -60,31 +60,77 @@
 	width: auto;
 }
 
-h2 {
-	/*border: 1px solid red;*/
+h2 { /*border: 1px solid red;*/
+	
 }
-
 </style>
-
 </head>
-
-
 <body>
 	<div data-role="page" id="main">
+		<div data-role="popup" id="infoPopup" class="ui-content"
+			data-position-to="window" data-transition="slidedown" data-theme="d"
+			data-overlay-theme="a">
+			<a href="#" data-rel="back" data-role="button" data-theme="a"
+				data-icon="delete" data-iconpos="notext" class="ui-btn-right">Close</a>
+			<h2>Appening Amsterdam</h2>
+			<p>Ever wondered what to do on a Saturday evening, all those
+				things going on, but you either do not know about it, or are
+				uncertain whether they are worth going out into the rain?</p>
+			<p>Well, now there is a solution to this issue: Appening
+				Amsterdam finds interesting locations at any given time within the
+				city of Amsterdam by looking at Twitter messages from this area.</p>
+			<p>From this, we are able to generate recommendations for places
+				to check out. You can see pictures and links mentioned together with
+				the place, see its location, calculate your distance, and also have
+				a look at the latest Tweets on it.</p>
+			<h3>Step-By-Step</h3>
+			<ol>
+				<li>People are out and about in the city with their
+					smartphones, if they find or do something interesting, they are
+					somewhat likely to write a Twitter update on it.</</li>
+				<li>Appening Amsterdam <strong>looks at the live
+						Twitter stream</strong> from the Amsterdam area, and stores all updates.
+				</li>
+				<li>Every couple of minutes, Appening <strong>counts
+						the number of recent Tweets</strong> for a huge list of places and stores
+					these figures.
+				</li>
+				<li>From the stored figures, Appening can now determine <strong>whether
+						a place is quickly gaining popularity</strong> on Twitter, an excellent
+					indicator that <strong>something interesting is going on</strong>
+					there.
+				</li>
+				<li><strong>Popular places</strong> are then again published as
+					an <a href="http://www.appening.at/data/feed.rss">RSS feed</a>, on
+					the Twitter account <a href="http://www.twitter.com/AppeningAMS">@AppeningAMS</a>,
+					and of course on this Webpage.</li>
+			</ol>
+			<p>
+				<small> Appening Amsterdam was developed by <a
+					href="http://hannes.muehleisen.org">Hannes M&uuml;hleisen</a> and
+					Kathrin Dentler. This application was developed for the 2012 <a
+					href="http://www.appsforamsterdam.nl/">Apps for Amsterdam</a>
+					contest. The source code for this App is available on <a
+					href="https://github.com/hannesmuehleisen/Appening">Github</a>.
+				</small>
+			</p>
+		</div>
+
 		<div data-role="header" data-theme="b">
 			<h1>Appening Amsterdam</h1>
 			<a href="" id="posbutton" return false;"
-				data-role="button" data-icon="appening-location"
-				data-iconpos="notext">How Far Am I?</a>
+				data-role="button"
+				data-icon="appening-location" data-iconpos="notext">G</a>
 		</div>
 		<!-- /header -->
 		<div data-role="content">
 			<p>
 				<strong>Welcome to Appening Amsterdam</strong>, the event
-				recommendations generated from Twitter messages.
-				<!-- <a href="">How
-					does this work?</a> -->
+				recommendations generated from Twitter messages. <a
+					href="#infoPopup" data-rel="popup">How does this work?</a>
 			</p>
+
+
 
 			<div data-role="collapsible-set" data-inset="false" id="places"
 				data-theme="d" data-content-theme="d">
@@ -93,14 +139,12 @@ h2 {
 
 		</div>
 		<!-- /content -->
-
 		<div data-role="footer" data-theme="b"></div>
-
 	</div>
 	<!-- /page -->
 
-
 	<script type="text/javascript">
+		// stuff to support external links directly to places
 		var hash = window.location.hash;
 		var idregex = /-([\d]+)$/;
 		var showPlaceId = undefined;
@@ -112,7 +156,6 @@ h2 {
 			pageUpdater();
 		});
 	</script>
-
 
 </body>
 </html>
