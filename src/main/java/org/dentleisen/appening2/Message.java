@@ -9,7 +9,11 @@ import java.text.ParseException;
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Date;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import org.apache.log4j.Logger;
 import org.json.simple.JSONObject;
@@ -181,10 +185,21 @@ public class Message {
 	public Object toJSON() {
 		JSONObject msgObj = new JSONObject();
 		msgObj.put("id", getId());
-		msgObj.put("created",
-				Utils.jsonDateFormat.format(getCreated()));
+		msgObj.put("created", Utils.jsonDateFormat.format(getCreated()));
 		msgObj.put("user", getUser());
 		msgObj.put("text", getText());
 		return msgObj;
 	}
+
+	private static Pattern linkRegex = Pattern.compile("(?iu)(https?://\\S+)");
+
+	public Set<String> findLinks() {
+		Set<String> links = new HashSet<String>();
+		Matcher m = linkRegex.matcher(text);
+		while (m.find()) {
+			links.add(m.group(1));
+		}
+		return links;
+	}
+
 }

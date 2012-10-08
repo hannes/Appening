@@ -31,7 +31,7 @@ public class Utils {
 	private static Logger log = Logger.getLogger(Utils.class);
 
 	// has to correspond to value in mysql stored
-	// procedures, so DO NOT CHANGE
+	// procedures, so DO NOT CHANGE unless you change it there, too
 	public static final double messageThreshold = 13;
 
 	private static Properties configuration = new Properties();
