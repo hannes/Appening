@@ -11,7 +11,7 @@ DECLARE `procedureName` VARCHAR(100) DEFAULT 'oldMessagesMoveProc';
 
 DECLARE `cutoffHour` DATETIME;
 
-SET `cutoffHour`= DATE_SUB(NOW(), INTERVAL 72 HOUR);
+SET `cutoffHour`= DATE_SUB(NOW(), INTERVAL 48 HOUR);
 
 `procBody`:BEGIN
 IF (EXISTS(SELECT `running` FROM `procstat` WHERE `procedure`=`procedureName` AND `running`=TRUE)) THEN

@@ -182,7 +182,7 @@ public class Utils {
 			}
 		}
 		return h;
-	}	
+	}
 
 	public static long[] fillField(long[] points, int numHours) {
 		long[] h = { 0 };

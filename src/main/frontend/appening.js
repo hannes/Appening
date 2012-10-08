@@ -115,7 +115,7 @@ function pageUpdater() {
 			});
 
 		} else {
-			// TODO: show some heartfelt message that we could not find anything
+			$('#places .loading').text("Sorry, nothing found at the moment...")
 		}
 
 		// TODO: really refresh periodically?
