@@ -1,11 +1,15 @@
 package org.dentleisen.appening2;
 
+import java.net.HttpURLConnection;
+import java.net.URL;
 import java.net.URLEncoder;
 import java.nio.charset.Charset;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Timer;
 import java.util.TimerTask;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import org.apache.log4j.Logger;
 import org.jets3t.service.S3ServiceException;
@@ -53,6 +57,11 @@ public class DataExporter {
 			.getCfgStr("appening.twitter.urlPrefix");
 
 	private static final int numMessages = 20;
+	
+	// patterns to extract URLs from tweets
+    private static final Pattern split = Pattern.compile("[\\s;\\(\\)]");
+    private static final Pattern stripBeginning = Pattern.compile("^['\":-]+");
+    private static final Pattern stripEnding = Pattern.compile("['\":\\?!\\.]+$");
 
 	public static void runTask() {
 		exportRSS();
@@ -121,37 +130,133 @@ public class DataExporter {
 
 	@SuppressWarnings("unchecked")
 	public static void exportJson() {
-		JSONArray json = new JSONArray();
+		JSONArray popularPlacesJson = new JSONArray();
 
 		try {
-			List<PopularPlace> places = Place.loadPopularPlaces(minMentions,
+			List<PopularPlace> popularPlaces = Place.loadPopularPlaces(minMentions,
 					minMentionsDays);
-			for (PopularPlace p : places) { // upload recent twitter
-				// messages so we can display them
-				JSONArray messages = new JSONArray();
-				List<Message> recentMessages = p.loadRecentMessages(
+			
+			for (PopularPlace popularPlace : popularPlaces) {
+			    // upload recent twitter messages so we can display them
+				JSONArray messagesJson = new JSONArray();
+				List<Message> recentMessages = popularPlace.loadRecentMessages(
 						numMessages, Utils.messageThreshold);
+				
 				for (Message msg : recentMessages) {
-					
-					messages.add(msg.toJSON());
+				    // extract URLs from message, add to popular place's link set
+				    // we do it here, to lazily expand short URLs
+				    List<String> links = extractUrls(msg.getText());
+				    if (links != null) {
+				        for (String link : links) {
+	                        popularPlace.links.add(link);
+				        }
+				    }
+				    
+					messagesJson.add(msg.toJSON());
 				}
 
-				String messagesJsonUrl = jsonArrToS3(messages, s3Prefix + p.id
+				String messagesJsonUrl = jsonArrToS3(messagesJson, s3Prefix + popularPlace.id
 						+ "-messages.json");
 
 				// add reference to messages JSON to place so we can
 				// load it from GUI
-				JSONObject pj = p.toJSON();
-				pj.put("messagesUrl", messagesJsonUrl);
-				json.add(pj);
+				JSONObject popularPlaceJson = popularPlace.toJSON();
+				popularPlaceJson.put("messagesUrl", messagesJsonUrl);
+				popularPlacesJson.add(popularPlaceJson);
 			}
-			jsonArrToS3(json, s3Prefix + "places.json");
+			
+			jsonArrToS3(popularPlacesJson, s3Prefix + "places.json");
 
 			log.info("Created JSON & uploaded to S3");
 		} catch (Exception e) {
 			log.warn("Unable to create and upload json file", e);
 		}
 	}
+	
+	/**
+	 * Finds and expands all URLs from the text of a tweet.
+	 * @param text text of a tweet
+	 * @return list of URLs, null if there are no URLs
+	 */
+	private static List<String> extractUrls(String text) {
+	    List<String> ret = null;
+        String[] words = split.split(text);
+        for (String word : words) {
+            // strip all kinds of weird symbols from beginning of word
+            Matcher m = stripBeginning.matcher(word);
+            word = m.replaceFirst("");
+
+            // strip even more weird symbols from end of word
+            m = stripEnding.matcher(word);
+            word = m.replaceFirst("");
+
+            if (word.length() > 9 && (word.startsWith("http://") || word.startsWith("https://"))) {
+                // this word is a URL
+                String expandedUrl = expandUrl(word, 0);
+
+                if (expandedUrl.endsWith("/")) {
+                    expandedUrl = expandedUrl.substring(0, expandedUrl.length() - 1);
+                }
+                
+                if (ret == null) {
+                    ret = new ArrayList<String>();
+                }
+                ret.add(expandedUrl);
+            }
+        }
+        
+        return ret;
+	}
+
+    /**
+     * Expands a shortened URL. Recursively expands chained shortened URLS (e.g.
+     * t.co -> bit.ly -> bit.ly...). Stops after 3 recursions. In case of any
+     * exceptions, the original (short) URL is returned.
+     * @param shortenedUrl the URL to expand
+     * @param recursionDepth depth of recursion
+     * @return the long URL
+     */
+    private static String expandUrl(String shortenedUrl, int recursionDepth) {
+        if (log.isDebugEnabled()) {
+            log.debug("expand URL " + shortenedUrl);
+        }
+
+        String expandedUrl;
+        if (shortenedUrl.length() > 30 || recursionDepth >= 2) {
+            expandedUrl = shortenedUrl;
+        }
+        else {
+            URL url;
+            HttpURLConnection connection = null;
+            try {
+                url = new URL(shortenedUrl);
+                connection = (HttpURLConnection) url.openConnection();
+                connection.setInstanceFollowRedirects(false);
+                connection.setConnectTimeout(1000);
+                connection.connect();
+
+                expandedUrl = connection.getHeaderField("Location");
+                connection.getInputStream().close();
+
+                if (expandedUrl == null || !expandedUrl.startsWith("http")) {
+                    expandedUrl = shortenedUrl;
+                }
+                else {
+                    expandedUrl = expandUrl(expandedUrl, recursionDepth + 1);
+                }
+            }
+            catch (Exception e) {
+                expandedUrl = shortenedUrl;
+            }
+            finally {
+                if (connection != null) {
+                    connection.disconnect();
+                }
+            }
+        }
+
+        return expandedUrl;
+    }
 
 	public static void main(String[] args) {
 		log.info("Data Exporter starting, charset=" + Charset.defaultCharset()

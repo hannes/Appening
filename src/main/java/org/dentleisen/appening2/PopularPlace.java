@@ -7,10 +7,13 @@ import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Date;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 import java.util.TimeZone;
 
 import org.json.simple.JSONObject;
+import com.amazonaws.util.json.JSONArray;
 
 public class PopularPlace extends Place {
 
@@ -43,6 +46,8 @@ public class PopularPlace extends Place {
 	public double rank = 0;
 
 	public long[] mentions;
+	
+	public Set<String> links = new HashSet<String>();
 
 	public PopularPlace(Place p) {
 		super(p);
@@ -105,6 +110,13 @@ public class PopularPlace extends Place {
 		to.put("rank", rank);
 
 		placeObj.put("trend", to);
+		
+		JSONArray linksArray = new JSONArray();
+		for (String link : links) {
+		    linksArray.put(link);
+		}
+		placeObj.put("links", linksArray);
+		
 		return placeObj;
 	}
 
