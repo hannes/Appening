@@ -104,6 +104,11 @@ function pageUpdater() {
 				var pid = placeholder.attr('data-id');
 				showMap(pid, placeholder);
 			});
+			$("#places .loadingTrend").bind("show", function() {
+				var placeholder = $(this);
+				var pid = placeholder.attr('data-id');
+				showTrend(pid, placeholder);
+			});
 			if (showPlaceId != undefined && $('#' + showPlaceId).length > 0) {
 				var ele = $('#' + showPlaceId);
 				console.log(ele);
@@ -125,8 +130,9 @@ function pageUpdater() {
 
 }
 
-function generateTrends(place) {
-	ret = '<div data-role="collapsible"><h2>Trends</h2><table><tr><th>48h</th><th>24h</th><th>12h</th><th>6h</th><th>3h</th><th>Rank</th></tr>';
+function showTrend(pid,placeholder) {
+	ret = '<table><tr><th>48h</th><th>24h</th><th>12h</th><th>6h</th><th>3h</th><th>Rank</th></tr>';
+	place = findPlaceById(pid);
 
 	ret += trendFigure(place.trend.h48);
 	ret += trendFigure(place.trend.h24);
@@ -147,9 +153,7 @@ function generateTrends(place) {
 			+ '&chds=a&chd=t:'
 			+ chartSeries.join(',')
 			+ '&chxt=x,y" /></p>';
-	ret += '</div>';
-
-	return ret;
+	$(placeholder).replaceWith($(ret));
 }
 
 function generateHtml(place) {
@@ -167,7 +171,8 @@ function generateHtml(place) {
 			+ place.id + '>loading...</p></div>';
 	ret += '<div data-role="collapsible"><h2>Recent Tweets</h2><p class="loadingMessages" data-id='
 			+ place.id + '>loading...</p></div>';
-	ret += generateTrends(place);
+	ret += '<div data-role="collapsible"><h2>Trends</h2><p class="loadingTrend" data-id='
+		+ place.id + '>loading...</p></div>';
 
 	ret += '</div>'; // end sub collapsible
 	ret += '</div>'; // end main collapsible
