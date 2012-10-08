@@ -5,7 +5,7 @@ if (typeof (Number.prototype.toRad) === "undefined") {
 }
 
 function dist(lat1, lon1, lat2, lon2) {
-	var R = 6371; // km
+	var R = 6371; // earth radius in km
 	var dLat = (lat2 - lat1).toRad();
 	var dLon = (lon2 - lon1).toRad();
 	var lat1 = lat1.toRad();
