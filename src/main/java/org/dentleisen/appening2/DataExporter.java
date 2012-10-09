@@ -57,7 +57,7 @@ public class DataExporter {
 	static {
 		ignoreDomains.add("foursquare");
 		ignoreDomains.add("twitter");
-
+		ignoreDomains.add("t.co");
 	}
 
 	// @SuppressWarnings("unchecked")

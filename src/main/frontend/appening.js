@@ -35,10 +35,21 @@ function linkify(text) {
 }
 
 function generateWeb(place) {
-	// TODO: replace with actual content
-	return '<ul data-role="listview" data-inset="true">'
-			+ '<li><a href="http://fronteers.nl/congres/2012/schedule">Fronteers 2012 Schedule</a></li>'
-			+ '<li><p><img height="140px" src="testeventpic.jpg" />&nbsp;<img height="140px" src="testeventpic2.jpg" />&nbsp;<img height="140px" src="testeventpic3.jpg" /></p></li></ul>';
+	ret = '<ul data-role="listview" data-inset="true">';
+	$.each(place.links, function(index, link) {
+		ret += '<li><a href="' + link.url + '">' + link.title + '</a></li>';
+	});
+	if (place.images.length > 0) {
+		ret += '<li><p>';
+		$.each(place.images, function(index, link) {
+			ret += '<img height="140px" src="' + link.mediaUrl + '"/>&nbsp;';
+		});
+		ret += '</p></li>';
+	}
+
+	ret += '</ul>';
+	return ret;
+
 }
 
 function trendFigure(trend) {
@@ -130,7 +141,7 @@ function pageUpdater() {
 
 }
 
-function showTrend(pid,placeholder) {
+function showTrend(pid, placeholder) {
 	ret = '<table><tr><th>48h</th><th>24h</th><th>12h</th><th>6h</th><th>3h</th><th>Rank</th></tr>';
 	place = findPlaceById(pid);
 
@@ -162,8 +173,8 @@ function generateHtml(place) {
 			+ '"><h2><span class="distance ui-li-count ui-btn-up-d ui-btn-corner-all"></span> '
 			+ place.name + '</h2>';
 	// TODO: re-enable once links, pictures and vieos are also exportet
-	
-	//ret += generateWeb(place);
+
+	ret += generateWeb(place);
 
 	// rest is sub collapsible
 	ret += '<div data-role="collapsible-set" data-mini="true" data-inset="true" data-theme="d" data-content-theme="d">';
@@ -172,7 +183,7 @@ function generateHtml(place) {
 	ret += '<div data-role="collapsible"><h2>Recent Tweets</h2><p class="loadingMessages" data-id='
 			+ place.id + '>loading...</p></div>';
 	ret += '<div data-role="collapsible"><h2>Trends</h2><p class="loadingTrend" data-id='
-		+ place.id + '>loading...</p></div>';
+			+ place.id + '>loading...</p></div>';
 
 	ret += '</div>'; // end sub collapsible
 	ret += '</div>'; // end main collapsible
