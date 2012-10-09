@@ -1,6 +1,7 @@
 package org.dentleisen.appening2;
 
 import java.beans.PropertyVetoException;
+import java.io.File;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.UnsupportedEncodingException;
@@ -22,8 +23,21 @@ import org.apache.http.HttpResponse;
 import org.apache.http.client.methods.HttpGet;
 import org.apache.http.impl.client.DefaultHttpClient;
 import org.apache.log4j.Logger;
+import org.jets3t.service.S3ServiceException;
+import org.jets3t.service.ServiceException;
+import org.jets3t.service.acl.AccessControlList;
+import org.jets3t.service.acl.GroupGrantee;
+import org.jets3t.service.acl.Permission;
+import org.jets3t.service.impl.rest.httpclient.RestS3Service;
+import org.jets3t.service.model.S3Object;
+import org.jets3t.service.security.AWSCredentials;
+import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 import org.json.simple.parser.JSONParser;
+
+import twitter4j.Twitter;
+import twitter4j.TwitterFactory;
+import twitter4j.conf.ConfigurationBuilder;
 
 import com.mchange.v2.c3p0.ComboPooledDataSource;
 
@@ -43,6 +57,25 @@ public class Utils {
 			log.warn("Unable to find properties in Classpath!");
 		}
 	}
+
+	private static final String awsAccessKey = Utils
+			.getCfgStr("appening.export.awsAccessKey");
+	private static final String awsSecretKey = Utils
+			.getCfgStr("appening.export.awsSecretKey");
+	private static final String s3Bucket = Utils
+			.getCfgStr("appening.export.S3Bucket");
+	protected static final String s3Prefix = Utils
+			.getCfgStr("appening.export.s3Prefix");
+
+	private static final String accessToken = Utils
+			.getCfgStr("appening.twitter.accessToken");
+	private static final String accessSecret = Utils
+			.getCfgStr("appening.twitter.accessSecret");
+
+	private static final String consumerKey = Utils
+			.getCfgStr("appening.twitter.consumerKey");
+	private static final String consumerSecret = Utils
+			.getCfgStr("appening.twitter.consumerSecret");
 
 	private static ComboPooledDataSource cpds = null;
 
@@ -200,4 +233,92 @@ public class Utils {
 				"<a href=\"http://search.twitter.com/search?q=$2\">#$2</a>");
 		return text;
 	}
+
+	private static RestS3Service s3 = null;
+	private static AccessControlList bucketAcl = null;
+
+	public static String jsonArrToS3(JSONArray arr, String s3Key) {
+		return stringToS3(arr.toJSONString(), s3Key, "application/json");
+	}
+
+	private synchronized static RestS3Service getS3() {
+		if (s3 == null) {
+			try {
+				s3 = new RestS3Service(new AWSCredentials(awsAccessKey,
+						awsSecretKey));
+				s3.getHttpClient().getParams()
+						.setParameter("http.protocol.content-charset", "UTF-8");
+			} catch (S3ServiceException e) {
+				log.warn("Unable to initialize S3 client", e);
+			}
+		}
+		return s3;
+	}
+
+	private synchronized static AccessControlList getAcl() {
+		if (bucketAcl == null) {
+			try {
+				bucketAcl = getS3().getBucketAcl(s3Bucket);
+			} catch (ServiceException e) {
+				log.warn("Unable to update S3 Bucket ACL", e);
+			}
+			bucketAcl.grantPermission(GroupGrantee.ALL_USERS,
+					Permission.PERMISSION_READ);
+		}
+		return bucketAcl;
+	}
+
+	public static String stringToS3(String data, String s3Key,
+			String contentType) {
+		try {
+			S3Object dataFileObject = new S3Object(s3Key, data);
+			dataFileObject.setAcl(getAcl());
+			dataFileObject.setContentType(contentType);
+			dataFileObject.setContentEncoding("UTF-8");
+
+			getS3().putObject(s3Bucket, dataFileObject);
+			log.debug("Uploaded to " + s3Key);
+			return getS3().createUnsignedObjectUrl(s3Bucket, s3Key, true,
+					false, false);
+		} catch (Exception e) {
+			log.warn("Unable to upload JSON to S3", e);
+		}
+
+		return "";
+	}
+
+	public static String fileToS3(File data, String s3Key, String contentType) {
+		try {
+			S3Object dataFileObject = new S3Object(data);
+			dataFileObject.setKey(s3Key);
+			dataFileObject.setAcl(getAcl());
+			dataFileObject.setContentType(contentType);
+
+			getS3().putObject(s3Bucket, dataFileObject);
+			log.debug("Uploaded to " + s3Key);
+			return getS3().createUnsignedObjectUrl(s3Bucket, s3Key, true,
+					false, false);
+		} catch (Exception e) {
+			log.warn("Unable to upload JSON to S3", e);
+		}
+
+		return "";
+	}
+
+	private static Twitter twitter = null;
+
+	public static synchronized Twitter getTwitter() {
+		if (twitter == null) {
+			ConfigurationBuilder cb = new ConfigurationBuilder();
+			cb.setDebugEnabled(false).setOAuthConsumerKey(consumerKey)
+					.setOAuthConsumerSecret(consumerSecret)
+					.setOAuthAccessToken(accessToken)
+					.setOAuthAccessTokenSecret(accessSecret);
+
+			TwitterFactory factory = new TwitterFactory(cb.build());
+			twitter = factory.getInstance();
+		}
+		return twitter;
+	}
+
 }

@@ -124,7 +124,6 @@ public class Message {
 			s.setString(1, key);
 			s.setString(2, key);
 			s.setDouble(3, minScore);
-			// TODO: date ranges
 
 			ResultSet rs = s.executeQuery();
 

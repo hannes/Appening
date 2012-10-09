@@ -9,16 +9,15 @@ import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.text.ParseException;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collection;
+import java.util.Date;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
-import java.util.Set;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -57,23 +56,27 @@ public class WebResource {
 	private String url;
 	private String title;
 	private boolean hadErrors = false;
-	private File imageFile;
 	private String imageUrl;
-	private boolean loadedFromDb = false;
+	private int placeId;
+	private Date tweeted;
 
 	private static Pattern pageTitlePattern = Pattern.compile(
 			"<title>(.*?)</title>", Pattern.DOTALL);
 
-	public WebResource(String shortenedUrl) {
+	public WebResource(String shortenedUrl, Place p, Message m) {
 		this.shortenedUrl = shortenedUrl;
+		this.tweeted = m.getCreated();
+		this.placeId = p.id;
 	}
 
-	public WebResource(String url, String type, String title, String imageUrl) {
+	public WebResource(int placeId, Date tweeted, String url, Type type,
+			String title, String mediaUrl) {
+		this.placeId = placeId;
+		this.tweeted = tweeted;
 		this.url = url;
-		this.type = Type.valueOf(title);
+		this.type = type;
 		this.title = title;
-		this.imageUrl = imageUrl;
-		this.loadedFromDb = true;
+		this.imageUrl = mediaUrl;
 	}
 
 	public static Map<String, Pattern> imageScrapers = new HashMap<String, Pattern>();
@@ -106,16 +109,6 @@ public class WebResource {
 			HttpResponse getResponse = httpClient.execute(get, localContext);
 
 			url = getUrlAfterRedirects(localContext);
-
-			// now check db and load ourselves from db if url is found
-			WebResource dbResource = searchDb(url);
-			if (dbResource != null) {
-				this.type = dbResource.type;
-				this.title = dbResource.title;
-				this.imageUrl = dbResource.imageUrl;
-				return this;
-			}
-
 			URL u = new URL(url);
 
 			String pageContent = EntityUtils.toString(getResponse.getEntity());
@@ -138,11 +131,6 @@ public class WebResource {
 					}
 				}
 			}
-			// TODO: where is this decision taken?
-			if (isImage()) {
-				downloadImageAndResize();
-			}
-			save();
 
 			return this;
 		} catch (Exception e) {
@@ -152,45 +140,7 @@ public class WebResource {
 		return null;
 	}
 
-	private static WebResource searchDb(String anUrl) {
-		WebResource res = null;
-		Connection c = null;
-		PreparedStatement s = null;
-		ResultSet rs = null;
-		try {
-			c = Utils.getConnection();
-			s = c.prepareStatement("SELECT `url`,`type`,`title`,`imageUrl` FROM `urls` WHERE `url`=?");
-			s.setString(1, anUrl);
-			rs = s.executeQuery();
-
-			if (rs.next()) {
-				res = new WebResource(rs.getString("url"),
-						rs.getString("type"), rs.getString("title"),
-						rs.getString("imageUrl"));
-			}
-		} catch (SQLException e) {
-			log.warn("Failed to run statement", e);
-		} finally {
-			try {
-				rs.close();
-			} catch (SQLException e) {
-				log.warn("Failed to clean up after statement", e);
-			}
-			try {
-				s.close();
-			} catch (SQLException e) {
-				log.warn("Failed to clean up after statement", e);
-			}
-			try {
-				c.close();
-			} catch (SQLException e) {
-				log.warn("Failed to clean up after statement", e);
-			}
-		}
-		return res;
-	}
-
-	private WebResource downloadImageAndResize() {
+	public File downloadImageAndResize(int thumbnailSize) {
 		if (this.type != Type.image) {
 			log.warn("Cannot download non-images!");
 			return null;
@@ -202,19 +152,18 @@ public class WebResource {
 					.execute(new HttpGet(imageUrl));
 			getResponse.getEntity().writeTo(new FileOutputStream(f));
 
-			imageFile = File.createTempFile(this.getClass().getSimpleName()
-					+ "-", ".png");
-			Thumbnails.of(f).size(400, 400).outputFormat("png")
-					.toFile(imageFile);
+			File imageFile = File.createTempFile(this.getClass()
+					.getSimpleName() + "-", ".png");
+			Thumbnails.of(f).size(thumbnailSize, thumbnailSize)
+					.outputFormat("png").toFile(imageFile);
 			f.delete();
 
-			return this;
+			return imageFile;
 		} catch (Exception e) {
 			log.warn(this + ": Unable to download file", e);
-			imageFile = null;
 			hadErrors = true;
 		}
-		return this;
+		return null;
 
 	}
 
@@ -275,6 +224,10 @@ public class WebResource {
 		}
 	}
 
+	public Date getTweeted() {
+		return tweeted;
+	}
+
 	public void setImageUrl(String newUrl) {
 		imageUrl = newUrl;
 	}
@@ -292,10 +245,6 @@ public class WebResource {
 		return hadErrors;
 	}
 
-	public File getImageFile() {
-		return imageFile;
-	}
-
 	public boolean isImage() {
 		return this.type.equals(Type.image);
 	}
@@ -306,23 +255,24 @@ public class WebResource {
 		msgObj.put("type", type.toString());
 		msgObj.put("url", url);
 		msgObj.put("title", title);
-		msgObj.put("imageUrl", imageUrl);
+		msgObj.put("mediaUrl", imageUrl);
+		msgObj.put("tweeted", Utils.jsonDateFormat.format(tweeted));
+		msgObj.put("place", placeId);
 		return msgObj;
 	}
 
 	public void save() {
-		if (this.loadedFromDb) {
-			return;
-		}
 		try {
 			Connection c = Utils.getConnection();
 			PreparedStatement s = c
-					.prepareStatement("INSERT DELAYED IGNORE INTO `urls` (`url`,`type`,`title`,`imageUrl`) VALUES (?,?,?,?)");
+					.prepareStatement("INSERT DELAYED IGNORE INTO `urls` (`place`,`tweeted`,`url`,`type`,`title`,`mediaUrl`) VALUES (?,?,?,?,?,?)");
 
-			s.setString(1, getUrl());
-			s.setString(2, getType().toString());
-			s.setString(3, getTitle());
-			s.setString(4, getImageUrl());
+			s.setInt(1, placeId);
+			s.setString(2, Utils.sqlDateTimeFormat.format(tweeted));
+			s.setString(3, getUrl());
+			s.setString(4, getType().toString());
+			s.setString(5, getTitle());
+			s.setString(6, getImageUrl());
 
 			s.executeUpdate();
 			s.close();
@@ -332,92 +282,24 @@ public class WebResource {
 		}
 	}
 
-	public static void main(String[] args) {
-		ExecutorService es = Executors.newFixedThreadPool(10);
-
-		Set<String> s = new HashSet<String>(Arrays.asList(
-				"http://t.co/gpGeFIWC", "http://t.co/mHMgEL3g",
-				"http://t.co/u96DwxBH", "http://t.co/hjIjBxCf",
-				"http://t.co/jFiJbgMv", "http://t.co/HKhrgaXS",
-				"http://t.co/jDUUuTHw", "http://t.co/2opPCBIF",
-				"http://t.co/N4O5sm58", "http://t.co/LaZ6i4fl"));
-
-		List<Future<WebResource>> futures = new ArrayList<Future<WebResource>>();
-		for (final String url : s) {
-			futures.add(es.submit(new Callable<WebResource>() {
-				@Override
-				public WebResource call() throws Exception {
-					WebResource r = new WebResource(url);
-					r.resolve();
-					if (r.hadErrors()) {
-						return r;
-					}
-					if (r.getType() == Type.image) {
-						r.downloadImageAndResize();
-						if (r.hadErrors()) {
-							return r;
-						}
-					}
-					return r;
-				}
-			}));
-		}
-		do {
-			Iterator<Future<WebResource>> futureIterator = futures.iterator();
-			while (futureIterator.hasNext()) {
-				Future<WebResource> wr = futureIterator.next();
-				if (wr.isDone()) {
-					try {
-						log.info(wr.get());
-						futureIterator.remove();
-
-					} catch (Exception e) {
-						// should not happen, we have already checked if the
-						// result is ready.
-						e.printStackTrace();
-					}
-				}
-			}
-
-		} while (futures.size() > 0);
-		es.shutdownNow();
-	}
-
 	private static final ExecutorService resolverThreadPool = Executors
 			.newFixedThreadPool(10);
 
-	private static Set<String> ignoreDomains = new HashSet<String>();
-	static {
-		ignoreDomains.add("foursquare");
-	}
-
-	public static Collection<WebResource> resolveLinks(
-			List<Message> recentMessages) {
-		Set<String> links = new HashSet<String>();
-
-		for (Message msg : recentMessages) {
-			links.addAll(msg.findLinks());
-		}
+	public static Collection<WebResource> resolveLinks(List<Message> messages,
+			final Place p) {
 
 		List<Future<WebResource>> futures = new ArrayList<Future<WebResource>>();
-		for (final String url : links) {
-			futures.add(resolverThreadPool.submit(new Callable<WebResource>() {
-				@Override
-				public WebResource call() throws Exception {
-					WebResource r = new WebResource(url);
-					r.resolve();
-					if (r.hadErrors()) {
-						return r;
-					}
-					if (r.getType() == Type.image) {
-						r.downloadImageAndResize();
-						if (r.hadErrors()) {
-							return r;
-						}
-					}
-					return r;
-				}
-			}));
+
+		for (final Message m : messages) {
+			for (final String url : m.findLinks()) {
+				futures.add(resolverThreadPool
+						.submit(new Callable<WebResource>() {
+							@Override
+							public WebResource call() throws Exception {
+								return new WebResource(url, p, m).resolve();
+							}
+						}));
+			}
 		}
 		Map<String, WebResource> resources = new HashMap<String, WebResource>();
 		do {
@@ -428,17 +310,11 @@ public class WebResource {
 					futureIterator.remove();
 					try {
 						WebResource wr = wrf.get();
-						URL u = wr.getUrlObj();
-						if (u == null) {
+						if (wr == null) {
 							continue;
 						}
-						boolean ignore= false;
-						for (String ignoreDomain : ignoreDomains) {
-							if (u.getHost().contains(ignoreDomain)) {
-								ignore = true;
-							}
-						}
-						if (ignore) {
+						URL u = wr.getUrlObj();
+						if (u == null) {
 							continue;
 						}
 						if (!resources.containsKey(wr.getUrl())) {
@@ -455,7 +331,58 @@ public class WebResource {
 			}
 
 		} while (futures.size() > 0);
-
 		return resources.values();
+	}
+
+	// TODO: how to handle numImages?
+	public static List<WebResource> loadResources(Place p, int numLinks,
+			int numImages) {
+		List<WebResource> resources = new ArrayList<WebResource>();
+		Connection c = null;
+		PreparedStatement s = null;
+		ResultSet rs = null;
+		try {
+			c = Utils.getConnection();
+			s = c.prepareStatement("SELECT `place`,`tweeted`,`url`,`type`,`title`,`mediaUrl` FROM `urls` WHERE `place`=? ORDER BY `tweeted` DESC LIMIT ?;");
+			s.setInt(1, p.id);
+			s.setInt(2, numLinks);
+
+			rs = s.executeQuery();
+
+			while (rs.next()) {
+				try {
+					WebResource wr = new WebResource(rs.getInt("place"),
+							Utils.sqlDateTimeFormat.parse(rs
+									.getString("tweeted")),
+							rs.getString("url"), Type.valueOf(rs
+									.getString("type")), rs.getString("title"),
+							rs.getString("mediaUrl"));
+					resources.add(wr);
+				} catch (ParseException e) {
+					log.warn(e);
+				}
+			}
+
+		} catch (SQLException e) {
+			log.warn("Failed to run statement", e);
+		} finally {
+			try {
+				rs.close();
+			} catch (SQLException e) {
+				log.warn("Failed to clean up after statement", e);
+			}
+			try {
+				s.close();
+			} catch (SQLException e) {
+				log.warn("Failed to clean up after statement", e);
+			}
+			try {
+				c.close();
+			} catch (SQLException e) {
+				log.warn("Failed to clean up after statement", e);
+			}
+		}
+
+		return resources;
 	}
 }

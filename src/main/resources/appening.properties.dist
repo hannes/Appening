@@ -23,7 +23,6 @@ appening.twitter.accessToken =
 appening.twitter.accessSecret = 
 appening.twitter.consumerKey = 
 appening.twitter.consumerSecret = 
-appening.twitter.intervalSeconds = 600
 appening.twitter.lastMentionedMins = 120
 appening.twitter.minRank = 10
 

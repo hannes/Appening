@@ -3,8 +3,8 @@
 -- http://www.phpmyadmin.net
 --
 -- Host: localhost
--- Generation Time: Sep 25, 2012 at 10:28 AM
--- Server version: 5.5.24
+-- Generation Time: Oct 09, 2012 at 10:55 AM
+-- Server version: 5.6.7
 -- PHP Version: 5.3.10-1ubuntu3.4
 
 SET SQL_MODE="NO_AUTO_VALUE_ON_ZERO";
@@ -30,95 +30,154 @@ CREATE DEFINER=`root`@`localhost` PROCEDURE `generateCountsProc`( `generateDate`
     DETERMINISTIC
 BEGIN
 
+DECLARE `procedureName` VARCHAR(100) DEFAULT 'generateCountsProc';
+
 DECLARE `threshold` INT DEFAULT 13;
-
 DECLARE `presentCount` INT;
-
 DECLARE `minHour`,`maxHour`,`curHour`,`endHour` DATETIME;
 
-
-
 DECLARE `done` INT DEFAULT FALSE;
-
 DECLARE `pid` INT DEFAULT 0;
-
 DECLARE `pname` VARCHAR(200);
 
-
-
 DECLARE `placesCursor` CURSOR FOR SELECT `id`,`name` FROM `places`;
-
 DECLARE CONTINUE HANDLER FOR NOT FOUND SET `done` = TRUE;
 
-
+SET time_zone='+0:00';
 
 SET `minHour` = DATE_ADD(`generateDate`, INTERVAL 0 SECOND);
-
 SET `maxHour`= DATE_SUB(DATE_SUB(NOW(), INTERVAL SECOND(NOW()) SECOND) , INTERVAL MINUTE(NOW()) MINUTE);
 
+`procBody`:BEGIN
+IF (EXISTS(SELECT `running` FROM `procstat` WHERE `procedure`=`procedureName` AND `running`=TRUE)) THEN
+	LEAVE `procBody`;
+END IF;
+DELETE FROM `procstat` WHERE `procedure`=`procedureName`;
+INSERT INTO `procstat` (`procedure`,`running`,`lastCompleted`) VALUES(`procedureName`,TRUE,NOW()); 
 
 
 OPEN `placesCursor`;
-
-
-
 `placesLoop`: LOOP
-
 	FETCH `placesCursor` INTO `pid`,`pname`;
-
 	IF `done` THEN
-
 		LEAVE `placesLoop`;
-
 	END IF;
-
 	
-
 	IF EXISTS(SELECT `updated` FROM `placeupdate` WHERE `place`=`pid`) THEN
-
 		SELECT `updated` INTO `curHour` FROM `placeupdate` WHERE `place`=`pid`;
-
-		DELETE FROM `placeupdate` WHERE `place`=`pid`;
-
 	ELSE
-
 		SET `curHour`= `minHour`;
-
 	END IF;
-
 	
-
 	WHILE `curHour` < `maxHour` DO
-
 		SET `endHour` = DATE_ADD(`curHour`, INTERVAL 1 HOUR);
-
 	 	SET `presentCount` = 
-
 	 		fulltext_score(`pname`,`threshold`,`curHour`,`endHour`);   	
-
 		IF `presentCount` > 0 THEN 
-
 			INSERT INTO `counts` (`place`,`start`,`end`,`count`) VALUES 
-
 				(`pid`,`curHour`,`endHour`,`presentCount`);	
-
 		END IF;
-
 		SET `curHour` = `endHour`;	
-
 	END WHILE;
-
 	
-
-	INSERT INTO `placeupdate` (`place`,`updated`) VALUES (`pid`,`maxHour`);
-
 	
-
+	IF EXISTS(SELECT `updated` FROM `placeupdate` WHERE `place`=`pid`) THEN
+		UPDATE `placeupdate` SET `updated`=`maxHour` WHERE `place`=`pid`;
+	ELSE
+		INSERT INTO `placeupdate` (`place`,`updated`) VALUES (`pid`,`maxHour`);
+	END IF;
+	
 END LOOP;
-
 CLOSE `placesCursor`;
 
+UPDATE `procstat` SET `running`=FALSE,`lastCompleted`=NOW() WHERE `procedure`=`procedureName`;
+
+END;
 	
+END$$
+
+DROP PROCEDURE IF EXISTS `generateRealtimeProc`$$
+CREATE DEFINER=`root`@`localhost` PROCEDURE `generateRealtimeProc`()
+    MODIFIES SQL DATA
+    DETERMINISTIC
+BEGIN
+
+DECLARE `procedureName` VARCHAR(100) DEFAULT 'generateRealtimeProc';
+
+DECLARE `threshold` INT DEFAULT 13;
+DECLARE `presentCount` INT;
+DECLARE `startHour`,`endHour` DATETIME;
+
+DECLARE `done` INT DEFAULT FALSE;
+DECLARE `pid` INT DEFAULT 0;
+DECLARE `pname` VARCHAR(200);
+
+DECLARE `placesCursor` CURSOR FOR SELECT `id`,`name` FROM `places`;
+DECLARE CONTINUE HANDLER FOR NOT FOUND SET `done` = TRUE;
+
+SET time_zone='+0:00';
+
+
+SET `startHour`= DATE_SUB(DATE_SUB(NOW(), INTERVAL SECOND(NOW()) SECOND) , INTERVAL MINUTE(NOW()) MINUTE);
+SET `endHour`= NOW();
+
+`procBody`:BEGIN
+IF (EXISTS(SELECT `running` FROM `procstat` WHERE `procedure`=`procedureName` AND `running`=TRUE)) THEN
+	LEAVE `procBody`;
+END IF;
+DELETE FROM `procstat` WHERE `procedure`=`procedureName`;
+INSERT INTO `procstat` (`procedure`,`running`,`lastCompleted`) VALUES(`procedureName`,TRUE,NOW()); 
+
+OPEN `placesCursor`;
+
+`placesLoop`: LOOP
+	FETCH `placesCursor` INTO `pid`,`pname`;
+	IF `done` THEN
+		LEAVE `placesLoop`;
+	END IF;
+	DELETE FROM `nowcounts` WHERE `place`=`pid`;
+	SET `presentCount` = 
+		fulltext_score(`pname`,`threshold`,`startHour`,`endHour`);   	
+	IF `presentCount` > 0 THEN 
+		INSERT INTO `nowcounts` (`place`,`count`) VALUES (`pid`,`presentCount`);		
+	END IF;			
+		
+END LOOP;
+CLOSE `placesCursor`;
+
+UPDATE `procstat` SET `running`=FALSE,`lastCompleted`=NOW() WHERE `procedure`=`procedureName`;
+
+	
+END;
+
+END$$
+
+DROP PROCEDURE IF EXISTS `oldMessagesMoveProc`$$
+CREATE DEFINER=`root`@`localhost` PROCEDURE `oldMessagesMoveProc`()
+    MODIFIES SQL DATA
+    DETERMINISTIC
+BEGIN
+
+DECLARE `procedureName` VARCHAR(100) DEFAULT 'oldMessagesMoveProc';
+
+DECLARE `cutoffHour` DATETIME;
+
+SET `cutoffHour`= DATE_SUB(NOW(), INTERVAL 48 HOUR);
+
+`procBody`:BEGIN
+IF (EXISTS(SELECT `running` FROM `procstat` WHERE `procedure`=`procedureName` AND `running`=TRUE)) THEN
+	LEAVE `procBody`;
+END IF;
+DELETE FROM `procstat` WHERE `procedure`=`procedureName`;
+INSERT INTO `procstat` (`procedure`,`running`,`lastCompleted`) VALUES(`procedureName`,TRUE,NOW()); 
+
+INSERT INTO `messagesold` SELECT * FROM `messages` WHERE `created` < `cutoffHour`;
+DELETE FROM `messages` WHERE `created` < `cutoffHour`;
+
+UPDATE `procstat` SET `running`=FALSE,`lastCompleted`=NOW() WHERE `procedure`=`procedureName`;
+
+END;
+
 
 END$$
 
@@ -132,7 +191,7 @@ BEGIN
 
 DECLARE `ct` INT;
 
-SELECT COUNT(*) INTO `ct` FROM (SELECT `id`, MATCH (`text`) AGAINST (CONCAT('"',`paramPlace`,'"') IN NATURAL LANGUAGE MODE) AS `score` FROM `messages` WHERE MATCH (`text`) AGAINST (CONCAT('"',`paramPlace`,'"') IN NATURAL LANGUAGE MODE) AND `created` > `startDate` AND `created` < `endDate`) AS `scores` WHERE `score`> `paramThreshold`;
+SELECT COUNT(`id`) INTO `ct` FROM `messages` WHERE MATCH (`text`) AGAINST (`paramPlace` IN NATURAL LANGUAGE MODE) > `paramThreshold` AND `created` > `startDate` AND `created` < `endDate`;
 
 RETURN (`ct`);
 
@@ -158,6 +217,19 @@ CREATE TABLE IF NOT EXISTS `counts` (
 -- --------------------------------------------------------
 
 --
+-- Table structure for table `linksresolved`
+--
+
+DROP TABLE IF EXISTS `linksresolved`;
+CREATE TABLE IF NOT EXISTS `linksresolved` (
+  `place` int(11) NOT NULL,
+  `resolved` datetime NOT NULL,
+  PRIMARY KEY (`place`)
+) ENGINE=MyISAM DEFAULT CHARSET=latin1;
+
+-- --------------------------------------------------------
+
+--
 -- Table structure for table `messages`
 --
 
@@ -166,11 +238,54 @@ CREATE TABLE IF NOT EXISTS `messages` (
   `id` varchar(100) NOT NULL,
   `created` datetime NOT NULL,
   `user` varchar(100) NOT NULL,
+  `text` mediumtext NOT NULL,
+  PRIMARY KEY (`id`),
+  KEY `dindex` (`created`),
+  FULLTEXT KEY `ft` (`text`)
+) ENGINE=MyISAM DEFAULT CHARSET=utf8;
+
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `messagesold`
+--
+
+DROP TABLE IF EXISTS `messagesold`;
+CREATE TABLE IF NOT EXISTS `messagesold` (
+  `id` varchar(100) NOT NULL,
+  `created` datetime NOT NULL,
+  `user` varchar(100) NOT NULL,
   `text` text NOT NULL,
   PRIMARY KEY (`id`),
   KEY `dindex` (`created`),
   FULLTEXT KEY `ft` (`text`)
 ) ENGINE=MyISAM DEFAULT CHARSET=latin1;
+
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `nowcounts`
+--
+
+DROP TABLE IF EXISTS `nowcounts`;
+CREATE TABLE IF NOT EXISTS `nowcounts` (
+  `place` int(11) NOT NULL,
+  `count` int(11) NOT NULL,
+  PRIMARY KEY (`place`)
+) ENGINE=InnoDB DEFAULT CHARSET=latin1;
+
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `placementioned`
+--
+
+DROP TABLE IF EXISTS `placementioned`;
+CREATE TABLE IF NOT EXISTS `placementioned` (
+  `place` int(11) NOT NULL,
+  `mentioned` datetime NOT NULL,
+  PRIMARY KEY (`place`)
+) ENGINE=InnoDB DEFAULT CHARSET=latin1;
 
 -- --------------------------------------------------------
 
@@ -185,7 +300,7 @@ CREATE TABLE IF NOT EXISTS `places` (
   `lat` double NOT NULL,
   `lng` double NOT NULL,
   PRIMARY KEY (`id`)
-) ENGINE=MyISAM  DEFAULT CHARSET=latin1 AUTO_INCREMENT=5934 ;
+) ENGINE=MyISAM  DEFAULT CHARSET=utf8 AUTO_INCREMENT=5934 ;
 
 -- --------------------------------------------------------
 
@@ -200,12 +315,50 @@ CREATE TABLE IF NOT EXISTS `placeupdate` (
   PRIMARY KEY (`place`)
 ) ENGINE=InnoDB DEFAULT CHARSET=latin1;
 
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `procstat`
+--
+
+DROP TABLE IF EXISTS `procstat`;
+CREATE TABLE IF NOT EXISTS `procstat` (
+  `procedure` varchar(100) NOT NULL,
+  `running` tinyint(1) NOT NULL,
+  `lastcompleted` datetime NOT NULL,
+  PRIMARY KEY (`procedure`)
+) ENGINE=InnoDB DEFAULT CHARSET=latin1;
+
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `urls`
+--
+
+DROP TABLE IF EXISTS `urls`;
+CREATE TABLE IF NOT EXISTS `urls` (
+  `place` int(11) NOT NULL,
+  `tweeted` datetime NOT NULL,
+  `url` varchar(100) CHARACTER SET latin1 NOT NULL,
+  `type` varchar(255) CHARACTER SET latin1 NOT NULL,
+  `title` varchar(255) NOT NULL,
+  `mediaUrl` varchar(255) CHARACTER SET latin1 NOT NULL,
+  PRIMARY KEY (`url`),
+  KEY `place` (`place`)
+) ENGINE=MyISAM DEFAULT CHARSET=utf8;
+
 DELIMITER $$
 --
 -- Events
 --
 DROP EVENT `generateCountsEvent`$$
 CREATE DEFINER=`root`@`localhost` EVENT `generateCountsEvent` ON SCHEDULE EVERY 1 HOUR STARTS '2012-09-24 16:01:00' ON COMPLETION NOT PRESERVE ENABLE DO CALL generateCountsProc('2012-09-21')$$
+
+DROP EVENT `generateRealtimeEvent`$$
+CREATE DEFINER=`root`@`localhost` EVENT `generateRealtimeEvent` ON SCHEDULE EVERY 15 MINUTE STARTS '2012-09-27 08:56:36' ON COMPLETION NOT PRESERVE ENABLE DO CALL generateRealtimeProc()$$
+
+DROP EVENT `oldMessagesMoveEvent`$$
+CREATE DEFINER=`root`@`localhost` EVENT `oldMessagesMoveEvent` ON SCHEDULE EVERY 1 DAY STARTS '2012-09-27 10:58:04' ON COMPLETION NOT PRESERVE ENABLE DO CALL oldMessagesMoveProc()$$
 
 DELIMITER ;
 

@@ -242,7 +242,8 @@ public class Place {
 
 		return messages;
 	}
-
+	
+	
 	public static List<PopularPlace> loadLastMentionedPlaces(long maxPlaces) {
 		List<PopularPlace> places = new ArrayList<PopularPlace>();
 		Connection c = null;

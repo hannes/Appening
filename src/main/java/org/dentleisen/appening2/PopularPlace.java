@@ -1,9 +1,12 @@
 package org.dentleisen.appening2;
 
+import java.io.UnsupportedEncodingException;
+import java.net.URLEncoder;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.text.ParseException;
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Date;
@@ -46,7 +49,7 @@ public class PopularPlace extends Place {
 	public double rank = 0;
 
 	public long[] mentions;
-	
+
 	public Set<String> links = new HashSet<String>();
 
 	public PopularPlace(Place p) {
@@ -69,6 +72,16 @@ public class PopularPlace extends Place {
 	public PopularPlace(Place p, Date mentioned) {
 		this(p);
 		this.lastMentioned = mentioned;
+	}
+
+	public String getLink(String prefix) {
+		try {
+			return prefix + "#" + URLEncoder.encode(name, "UTF-8") + "-"
+					+ Long.toHexString(lastMentioned.getTime()) + "-" + id;
+		} catch (UnsupportedEncodingException e) {
+			log.warn("Unable to encode " + name);
+		}
+		return "";
 	}
 
 	private static Popularity generatePopularity(long[] mentions, int hours) {
@@ -110,13 +123,13 @@ public class PopularPlace extends Place {
 		to.put("rank", rank);
 
 		placeObj.put("trend", to);
-		
+
 		JSONArray linksArray = new JSONArray();
 		for (String link : links) {
-		    linksArray.put(link);
+			linksArray.put(link);
 		}
 		placeObj.put("links", linksArray);
-		
+
 		return placeObj;
 	}
 
@@ -189,4 +202,83 @@ public class PopularPlace extends Place {
 			}
 		}
 	}
+
+	public void setResolved() {
+		Connection c = null;
+		PreparedStatement s1 = null;
+		PreparedStatement s2 = null;
+		try {
+			c = Utils.getConnection();
+			s1 = c.prepareStatement("DELETE FROM `linksresolved` WHERE `place`=?;");
+			s1.setInt(1, id);
+			s1.execute();
+
+			s2 = c.prepareStatement("INSERT INTO `linksresolved` (`place`,`resolved`) VALUES (?,NOW())");
+			s2.setInt(1, id);
+			s2.execute();
+
+		} catch (SQLException e) {
+			log.warn("Failed to run statement", e);
+		} finally {
+
+			try {
+				s1.close();
+			} catch (SQLException e) {
+				log.warn("Failed to clean up after statement", e);
+			}
+			try {
+				s2.close();
+			} catch (SQLException e) {
+				log.warn("Failed to clean up after statement", e);
+			}
+			try {
+				c.close();
+			} catch (SQLException e) {
+				log.warn("Failed to clean up after statement", e);
+			}
+		}
+	}
+
+	public Date lastResolved() {
+		Connection c = null;
+		PreparedStatement s = null;
+		ResultSet rs = null;
+		try {
+			c = Utils.getConnection();
+			s = c.prepareStatement("SELECT `resolved` FROM `linksresolved` WHERE `place`=?");
+			s.setInt(1, id);
+
+			rs = s.executeQuery();
+
+			if (rs.next()) {
+				try {
+					return Utils.sqlDateTimeFormat.parse(rs
+							.getString("resolved"));
+				} catch (ParseException e) {
+					log.warn("Failed to parse date from DB", e);
+				}
+			}
+
+		} catch (SQLException e) {
+			log.warn("Failed to run statement", e);
+		} finally {
+			try {
+				rs.close();
+			} catch (SQLException e) {
+				log.warn("Failed to clean up after statement", e);
+			}
+			try {
+				s.close();
+			} catch (SQLException e) {
+				log.warn("Failed to clean up after statement", e);
+			}
+			try {
+				c.close();
+			} catch (SQLException e) {
+				log.warn("Failed to clean up after statement", e);
+			}
+		}
+		return new Date(0);
+	}
+
 }
