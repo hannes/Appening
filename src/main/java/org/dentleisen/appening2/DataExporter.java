@@ -93,21 +93,26 @@ public class DataExporter {
 			Collection<WebResource> newResources = WebResource.resolveLinks(
 					msgsToResolve, p);
 			for (WebResource wr : newResources) {
+				boolean ignore = false;
 				for (String ignoreDomain : ignoreDomains) {
-					if (!wr.getUrlObj().getHost().contains(ignoreDomain)) {
-						if (wr.isImage()) {
-							File imageFile = wr
-									.downloadImageAndResize(thumbnailSize);
-							String imgUrl = Utils.fileToS3(imageFile,
-									Utils.s3Prefix + p.id + "-"
-											+ wr.getTweeted().getTime()
-											+ ".png", "image/png");
-							wr.setImageUrl(imgUrl);
-							imageFile.delete();
-						}
-						wr.save();
+
+					if (wr.getUrlObj().getHost().contains(ignoreDomain)) {
+						ignore = true;
 					}
 				}
+				if (ignore) {
+					continue;
+				}
+
+				if (wr.isImage()) {
+					File imageFile = wr.downloadImageAndResize(thumbnailSize);
+					String imgUrl = Utils.fileToS3(imageFile, Utils.s3Prefix
+							+ p.id + "-" + wr.getTweeted().getTime() + ".png",
+							"image/png");
+					wr.setImageUrl(imgUrl);
+					imageFile.delete();
+				}
+				wr.save();
 			}
 			p.setResolved();
 
