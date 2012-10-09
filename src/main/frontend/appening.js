@@ -42,7 +42,8 @@ function generateWeb(place) {
 	if (place.images.length > 0) {
 		ret += '<li><p>';
 		$.each(place.images, function(index, link) {
-			ret += '<img height="140px" src="' + link.mediaUrl + '"/>&nbsp;';
+			ret += '<img height="140px" src="' + link.mediaUrl + '" title="'
+					+ link.title + '" />&nbsp;';
 		});
 		ret += '</p></li>';
 	}
