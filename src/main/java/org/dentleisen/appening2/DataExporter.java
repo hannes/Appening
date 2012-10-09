@@ -152,7 +152,7 @@ public class DataExporter {
 			}
 
 			StatusUpdate su = new StatusUpdate("'" + p.name + "' - "
-					+ urlPrefix + "#-" + p.id + " (" + Math.round(p.rank) + ")");
+					+ p.getLink(urlPrefix) + " (" + Math.round(p.rank) + ")");
 			su.setLocation(new GeoLocation(p.lat, p.lng));
 			try {
 				Utils.getTwitter().updateStatus(su);
