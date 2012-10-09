@@ -36,6 +36,9 @@ import org.apache.http.client.methods.HttpGet;
 import org.apache.http.client.methods.HttpUriRequest;
 import org.apache.http.impl.client.DefaultHttpClient;
 import org.apache.http.impl.conn.tsccm.ThreadSafeClientConnManager;
+import org.apache.http.params.BasicHttpParams;
+import org.apache.http.params.HttpConnectionParams;
+import org.apache.http.params.HttpParams;
 import org.apache.http.protocol.BasicHttpContext;
 import org.apache.http.protocol.ExecutionContext;
 import org.apache.http.protocol.HttpContext;
@@ -167,8 +170,13 @@ public class WebResource {
 
 	}
 
+	private static HttpParams httpParams = new BasicHttpParams();
+	static {
+		HttpConnectionParams.setConnectionTimeout(httpParams, 30000);
+	}
+
 	private static DefaultHttpClient httpClient = new DefaultHttpClient(
-			new ThreadSafeClientConnManager());
+			new ThreadSafeClientConnManager(), httpParams);
 	public static final String LAST_REDIRECT_URL = "last_redirect_url";
 
 	static {
@@ -328,6 +336,11 @@ public class WebResource {
 						e.printStackTrace();
 					}
 				}
+			}
+			try {
+				Thread.sleep(100);
+			} catch (InterruptedException e) {
+				log.warn("Unable to sleep");
 			}
 
 		} while (futures.size() > 0);

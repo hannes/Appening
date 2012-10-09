@@ -65,12 +65,14 @@ public class DataExporter {
 	public static void runTask() {
 		log.info("Starting Exporter Run");
 
-		log.info("Exporting JSON");
 		List<PopularPlace> places = Place.loadPopularPlaces(minMentions,
 				minMentionsDays);
+		log.info("Exporting JSON for " + places.size() + " places...");
+
 		JSONArray placesJson = new JSONArray();
 		// JSON Loop
 		for (PopularPlace p : places) {
+			log.info(p.name);
 			JSONObject placeJson = p.toJSON();
 			JSONArray messagesJson = new JSONArray();
 			JSONArray linksJson = new JSONArray();
