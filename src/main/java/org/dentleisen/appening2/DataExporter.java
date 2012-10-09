@@ -151,6 +151,7 @@ public class DataExporter {
 				continue;
 			}
 
+			p.setMentioned();
 			StatusUpdate su = new StatusUpdate("'" + p.name + "' - "
 					+ p.getLink(urlPrefix) + " (" + Math.round(p.rank) + ")");
 			su.setLocation(new GeoLocation(p.lat, p.lng));
@@ -159,7 +160,6 @@ public class DataExporter {
 			} catch (TwitterException e) {
 				log.warn("Unable to update Twitter", e);
 			}
-			p.setMentioned();
 		}
 
 		log.info("Exporting RSS");
@@ -185,7 +185,7 @@ public class DataExporter {
 			description.setType("text/html");
 
 			String html = "<ul><li><a href=\""
-					+ p.getLink(urlPrefix)
+					+ entry.getLink()
 					+ "\">Appening page for place</a></li><li><a href=\"https://maps.google.com/maps?t=h&q=loc:"
 					+ p.lat + "," + p.lng
 					+ "&z=17\">Google Maps</a></li></ul><br /><ul>";

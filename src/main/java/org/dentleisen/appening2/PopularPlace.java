@@ -168,6 +168,8 @@ public class PopularPlace extends Place {
 	}
 
 	public void setMentioned() {
+		this.lastMentioned = Calendar.getInstance().getTime();
+
 		Connection c = null;
 		PreparedStatement s1 = null;
 		PreparedStatement s2 = null;
