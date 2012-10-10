@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title>Appening Amsterdam - Image Gallery</title>
+
+<!--  jQuery and Plugins -->
+<script src="http://code.jquery.com/jquery-1.8.2.min.js"></script>
+<script src="jquery.timeago.js" type="text/javascript"></script>
+
+<style type="text/css">
+body {
+	background-color: black;
+}
+
+.pic,.place {
+	float: left;
+	height: 150px;
+	width: 150px;
+	overflow: none;
+	margin: 5px;
+	position: relative;
+}
+
+.pic img {
+	vertical-align: middle;
+	display: block;
+	max-width: 150px;
+	max-height: 150px;
+}
+
+.place {
+	font-size: 20pt;
+	font-family: sans-serif;
+	text-align: left;
+}
+
+.place a {
+	text-decoration: none;
+	color: gray;
+}
+
+.place a:hover {
+	color: white;
+}
+
+.imgoverlay {
+	position: absolute;
+	bottom: 0px;
+	left: 0px;
+	width: 100%;
+	background-color: black;
+	opacity: 0.8;
+	overflow: none;
+}
+
+.imgoverlay .created,.imgoverlay .source {
+	font-family: sans-serif;
+	color: white;
+	display: block;
+}
+
+.imgoverlay .source {
+	text-decoration: none;
+}
+</style>
+
+</head>
+<body>
+	<div id="pictures"></div>
+
+	<script type="text/javascript">
+		$
+				.getJSON(
+						'data/places.json',
+						function(data) {
+							ret = "";
+							$
+									.each(
+											data,
+											function(index, place) {
+												if (place.images.length > 0) {
+													ret += '<div class="place"><a href="http://www.appening.at/#-'+place.id+'">'
+															+ place.name
+															+ '</a></div>';
+												}
+												$
+														.each(
+																place.images,
+																function(index,
+																		link) {
+																	ret += '<div class="pic"><img data-created="'
+																			+ link.tweeted
+																			+ '" data-source="'
+																			+ link.url
+																			+ '" src="'
+																			+ link.mediaUrl
+																			+ '" title="'
+																			+ link.title
+																			+ '" /></div>';
+																});
+											});
+							$("#pictures").html(ret);
+
+							$("#pictures .pic")
+									.mouseenter(
+											function(event) {
+												var ele = $(event.srcElement);
+												var url = document
+														.createElement('a');
+												url.href = ele
+														.attr('data-source');
+
+												$(
+														'<div class="imgoverlay"><span class="created">'
+																+ $
+																		.timeago(ele
+																				.attr('data-created'))
+																+ '</span>'
+																+ '<a class="source" href="'
+																+ ele
+																		.attr('data-source')
+																+ '">@'
+																+ url.hostname
+																+ '</a>'
+																+ '</div>')
+														.insertAfter(ele);
+											});
+							$("#pictures .pic").mouseleave(function(event) {
+								$("#pictures .pic .imgoverlay").remove();
+							});
+						});
+	</script>
+
+</body>
+</html>

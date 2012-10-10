@@ -37,6 +37,9 @@ function linkify(text) {
 function generateWeb(place) {
 	ret = '<ul data-role="listview" data-inset="true">';
 	$.each(place.links, function(index, link) {
+		if (link.title == "") {
+			return;
+		}
 		ret += '<li><a href="' + link.url + '">' + link.title + '</a></li>';
 	});
 	if (place.images.length > 0) {
