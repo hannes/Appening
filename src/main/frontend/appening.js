@@ -113,13 +113,16 @@ function geoSuccess(position) {
 		if (distance < 1) {
 			distStr = Math.round(distance * 1000) + 'm';
 		}
+
 		$('#' + place.id + ' .distance').text(distStr);
+		$('#' + place.id + ' .distance').addClass(
+		'ui-li-count ui-btn-up-d ui-btn-corner-all');
 	});
+	$('#places').trigger('create');
 }
 
 function geoError(positionError) {
-	console.log(positionError);
-	alert(positionError.code + ' ' + positionError.message);
+	// console.log(positionError);
 }
 
 function pageUpdater() {
@@ -165,7 +168,7 @@ function pageUpdater() {
 
 			$('#posbutton').click(function() {
 				navigator.geolocation.watchPosition(geoSuccess, geoError, {
-					enableHighAccuracy : true,
+					enableHighAccuracy : false,
 					maximumAge : 60000,
 					timeout : 30000
 				});
@@ -212,10 +215,8 @@ function showTrend(pid, placeholder) {
 }
 
 function generateHtml(place) {
-	ret = '<div data-role="collapsible" id="'
-			+ place.id
-			+ '"><h2><span class="distance ui-li-count ui-btn-up-d ui-btn-corner-all"></span> '
-			+ place.name + '</h2>';
+	ret = '<div data-role="collapsible" id="' + place.id + '"><h2>'
+			+ place.name + ' <span class="distance"></span></h2>';
 
 	ret += generateWeb(place);
 	// ret += '<div>'+generateSocial(place)+'</div>';
