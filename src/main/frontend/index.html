@@ -75,6 +75,7 @@ h2 { /*border: 1px solid red;*/
 </style>
 </head>
 <body>
+
 	<div data-role="page" id="main">
 		<div data-role="popup" id="infoPopup" class="ui-content"
 			data-position-to="window" data-transition="slidedown" data-theme="d"
@@ -96,7 +97,7 @@ h2 { /*border: 1px solid red;*/
 			<ol>
 				<li>People are out and about in the city with their
 					smartphones, if they find or do something interesting, they are
-					somewhat likely to write a Twitter update on it.</</li>
+					somewhat likely to write a Twitter update on it.</li>
 				<li>Appening Amsterdam <strong>looks at the live
 						Twitter stream</strong> from the Amsterdam area, and stores all updates.
 				</li>
@@ -114,6 +115,20 @@ h2 { /*border: 1px solid red;*/
 					the Twitter account <a href="http://www.twitter.com/AppeningAMS">@AppeningAMS</a>,
 					and of course on this Webpage.</li>
 			</ol>
+
+			<p>
+				<a href="https://twitter.com/AppeningAms"
+					class="twitter-follow-button" data-show-count="false">Follow
+					@AppeningAms</a>
+			</p>
+			<!-- 
+			<p>
+			<div class="fb-like"
+				data-href="https://www.facebook.com/AppeningAmsterdam"
+				data-width="450" data-show-faces="false"></div>
+				&nbsp;
+			</p> -->
+
 			<p>
 				<small> Appening Amsterdam was developed by <a
 					href="http://hannes.muehleisen.org">Hannes M&uuml;hleisen</a>, <a
@@ -129,8 +144,7 @@ h2 { /*border: 1px solid red;*/
 
 		<div data-role="header" data-theme="b">
 			<h1>Appening Amsterdam</h1>
-			<a href="" id="posbutton" return false;"
-				data-role="button"
+			<a href="" id="posbutton" data-role="button"
 				data-icon="appening-location" data-iconpos="notext">G</a>
 		</div>
 		<!-- /header -->
@@ -167,6 +181,33 @@ h2 { /*border: 1px solid red;*/
 			pageUpdater();
 		});
 	</script>
+
+	<script>
+		!function(d, s, id) {
+			var js, fjs = d.getElementsByTagName(s)[0];
+			if (!d.getElementById(id)) {
+				js = d.createElement(s);
+				js.id = id;
+				js.src = "//platform.twitter.com/widgets.js";
+				fjs.parentNode.insertBefore(js, fjs);
+			}
+		}(document, "script", "twitter-wjs");
+	</script>
+
+	<!-- 
+	<div id="fb-root"></div>
+	<script>
+		(function(d, s, id) {
+			var js, fjs = d.getElementsByTagName(s)[0];
+			if (d.getElementById(id))
+				return;
+			js = d.createElement(s);
+			js.id = id;
+			js.src = "//connect.facebook.net/en_US/all.js#xfbml=1&appId=280484462070835";
+			fjs.parentNode.insertBefore(js, fjs);
+		}(document, 'script', 'facebook-jssdk'));
+	</script>
+ -->
 
 </body>
 </html>

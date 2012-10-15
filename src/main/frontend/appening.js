@@ -48,11 +48,11 @@ function generateWeb(place) {
 	if (place.images.length > 0) {
 		ret += '<li><p>';
 		$.each(place.images, function(index, link) {
-			if (index > maxImages-1) {
+			if (index > maxImages - 1) {
 				return;
 			}
 			ret += '<img height="140px" src="' + link.mediaUrl + '" title="'
-					+ link.title + '" />&nbsp;';			
+					+ link.title + '" />&nbsp;';
 		});
 		ret += '</p></li>';
 	}
@@ -60,12 +60,26 @@ function generateWeb(place) {
 		if (link.title.trim() == "") {
 			return;
 		}
-		if (index > maxLinks-1) {
+		if (index > maxLinks - 1) {
 			return;
 		}
 		ret += '<li><a href="' + link.url + '">' + link.title + '</a></li>';
 	});
 	ret += '</ul>';
+
+	link = 'http://www.appening.at/#-' + place.id;
+
+	ret += '<p><a href="https://twitter.com/share" class="twitter-share-button" data-url="'
+			+ link
+			+ '" data-text="Something interesting going on at '
+			+ place.name
+			+ '" data-via="AppeningAms" data-count="none">Tweet</a></p>';
+
+	/*
+	 * ret += '<p><div class="fb-like" data-href="' + link + '"
+	 * data-width="450" data-show-faces="false"></div></p>';
+	 */
+
 	return ret;
 }
 
