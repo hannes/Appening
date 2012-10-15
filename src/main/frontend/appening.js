@@ -34,26 +34,39 @@ function linkify(text) {
 	return text;
 }
 
+if (!String.prototype.trim) {
+	String.prototype.trim = function() {
+		return this.replace(/^\s\s*/, '').replace(/\s\s*$/, '');
+	};
+}
+
+var maxImages = 4;
+var maxLinks = 4;
+
 function generateWeb(place) {
 	ret = '<ul data-role="listview" data-inset="true">';
+	if (place.images.length > 0) {
+		ret += '<li><p>';
+		$.each(place.images, function(index, link) {
+			if (index > maxImages-1) {
+				return;
+			}
+			ret += '<img height="140px" src="' + link.mediaUrl + '" title="'
+					+ link.title + '" />&nbsp;';			
+		});
+		ret += '</p></li>';
+	}
 	$.each(place.links, function(index, link) {
-		if (link.title == "") {
+		if (link.title.trim() == "") {
+			return;
+		}
+		if (index > maxLinks-1) {
 			return;
 		}
 		ret += '<li><a href="' + link.url + '">' + link.title + '</a></li>';
 	});
-	if (place.images.length > 0) {
-		ret += '<li><p>';
-		$.each(place.images, function(index, link) {
-			ret += '<img height="140px" src="' + link.mediaUrl + '" title="'
-					+ link.title + '" />&nbsp;';
-		});
-		ret += '</p></li>';
-	}
-
 	ret += '</ul>';
 	return ret;
-
 }
 
 function trendFigure(trend) {
@@ -87,6 +100,11 @@ function geoSuccess(position) {
 		}
 		$('#' + place.id + ' .distance').text(distStr);
 	});
+}
+
+function geoError(positionError) {
+	console.log(positionError);
+	alert(positionError.code + ' ' + positionError.message);
 }
 
 function pageUpdater() {
@@ -131,7 +149,11 @@ function pageUpdater() {
 			}
 
 			$('#posbutton').click(function() {
-				navigator.geolocation.watchPosition(geoSuccess);
+				navigator.geolocation.watchPosition(geoSuccess, geoError, {
+					enableHighAccuracy : true,
+					maximumAge : 60000,
+					timeout : 30000
+				});
 			});
 
 		} else {

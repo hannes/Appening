@@ -355,7 +355,7 @@ public class WebResource {
 		PreparedStatement s = null;
 		ResultSet rs = null;
 		try {
-			c = Utils.getConnection();
+			c = Utils.getConnection();			
 			s = c.prepareStatement("SELECT DISTINCT `place`,`tweeted`,`url`,`type`,`title`,`mediaUrl` FROM `urls` WHERE `place`=? ORDER BY `tweeted` DESC LIMIT ?;");
 			s.setInt(1, p.id);
 			s.setInt(2, numLinks);
