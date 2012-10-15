@@ -67,20 +67,21 @@ function generateWeb(place) {
 	});
 	ret += '</ul>';
 
+	return ret;
+}
+
+function generateSocial(place) {
+
 	link = 'http://www.appening.at/#-' + place.id;
 
-	ret += '<p><a href="https://twitter.com/share" class="twitter-share-button" data-url="'
+	ret = '<p><a href="https://twitter.com/share" class="twitter-share-button" data-url="'
 			+ link
 			+ '" data-text="Something interesting going on at '
 			+ place.name
 			+ '" data-via="AppeningAms" data-count="none">Tweet</a></p>';
 
-	/*
-	 * ret += '<p><div class="fb-like" data-href="' + link + '"
-	 * data-width="450" data-show-faces="false"></div></p>';
-	 */
-
 	return ret;
+
 }
 
 function trendFigure(trend) {
@@ -170,6 +171,9 @@ function pageUpdater() {
 				});
 			});
 
+			// Load Twitter Buttons
+			twttr.widgets.load()
+
 		} else {
 			$('#places .loading').text("Sorry, nothing found at the moment...")
 		}
@@ -212,9 +216,9 @@ function generateHtml(place) {
 			+ place.id
 			+ '"><h2><span class="distance ui-li-count ui-btn-up-d ui-btn-corner-all"></span> '
 			+ place.name + '</h2>';
-	// TODO: re-enable once links, pictures and vieos are also exportet
 
 	ret += generateWeb(place);
+	// ret += '<div>'+generateSocial(place)+'</div>';
 
 	// rest is sub collapsible
 	ret += '<div data-role="collapsible-set" data-mini="true" data-inset="true" data-theme="d" data-content-theme="d">';
@@ -226,6 +230,8 @@ function generateHtml(place) {
 			+ place.id + '>loading...</p></div>';
 
 	ret += '</div>'; // end sub collapsible
+
+	ret += generateSocial(place);
 	ret += '</div>'; // end main collapsible
 
 	return ret;
