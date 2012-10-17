@@ -254,7 +254,7 @@ function showMap(pid, placeholder) {
 			+ width
 			+ 'x'
 			+ height
-			+ '&format=PNG&maptype=terrain&markers=size:small|color:red|label:A|'
+			+ '&format=PNG&maptype=terrain&markers=color:red|label:A|'
 			+ place.lat + ',' + place.lng + '""/></a>';
 
 	locArea = $('<div></div>');
