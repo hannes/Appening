@@ -84,7 +84,8 @@ body {
 									.each(
 											data,
 											function(index, place) {
-												if (place.images.length > 0) {
+												if (place.images.length > 0
+														&& place.trend.rank > 1) {
 													ret += '<div class="place"><a href="http://www.appening.at/#-'+place.id+'">'
 															+ place.name
 															+ '</a></div>';
@@ -98,13 +99,17 @@ body {
 															+ ','
 															+ place.lng
 															+ '""/></a></div>';
-												}
-												$
-														.each(
-																place.images,
-																function(index,
-																		link) {
-																	ret += '<div class="pic"><img data-created="'
+
+													$
+															.each(
+																	place.images,
+																	function(
+																			index,
+																			link) {
+																		if (index > 5) {
+																			return;
+																		}
+																		ret += '<div class="pic"><img data-created="'
 																			+ link.tweeted
 																			+ '" data-source="'
 																			+ link.url
@@ -113,8 +118,10 @@ body {
 																			+ '" title="'
 																			+ link.title
 																			+ '" /></div>';
-																});
+																	});
+												}
 											});
+
 							$("#pictures").append(ret);
 
 							$("#pictures .pic")
