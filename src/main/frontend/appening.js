@@ -176,6 +176,11 @@ function pageUpdater() {
 				});
 			});
 
+			$('#reloadbutton').click(function() {
+				$('#places').html('<p class="loading">reloading...</p>');
+				pageUpdater();
+			});
+
 			// Load Twitter Buttons
 			twttr.widgets.load()
 
