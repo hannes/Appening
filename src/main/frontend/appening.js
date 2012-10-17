@@ -116,7 +116,7 @@ function geoSuccess(position) {
 
 		$('#' + place.id + ' .distance').text(distStr);
 		$('#' + place.id + ' .distance').addClass(
-		'ui-li-count ui-btn-up-d ui-btn-corner-all');
+				'ui-li-count ui-btn-up-d ui-btn-corner-all');
 	});
 	$('#places').trigger('create');
 }
@@ -241,30 +241,27 @@ function generateHtml(place) {
 function showMap(pid, placeholder) {
 	map = $('<div class="map"></div>');
 	width = Math.min(Math.round($('#main').width() * 0.8), 600);
-	map.width(width);
-	map.height(Math.round(width * 0.6));
-	map.gmap({
-		'center' : '52.3741,4.897',
-		'mapTypeControl' : false,
-		'mapTypeId' : google.maps.MapTypeId.ROADMAP,
-		'streetViewControl' : false,
-		'maxZoom' : 16
-	});
+	height = Math.round(width * 0.6);
 
 	place = findPlaceById(pid);
-
 	var latlng = new google.maps.LatLng(place.lat, place.lng);
 
-	map.gmap('addMarker', {
-		'position' : latlng,
-		'bounds' : true,
-		'id' : pid
-	});
+	image = '<a href="https://maps.google.com/maps?t=m&q=loc:'
+			+ place.lat
+			+ ','
+			+ place.lng
+			+ '&z=13"><img src="http://maps.googleapis.com/maps/api/staticmap?key=AIzaSyCHCVlEq_VleQp6qKdOpPgGT1W1h3yG29s&sensor=false&zoom=13&size='
+			+ width
+			+ 'x'
+			+ height
+			+ '&format=PNG&maptype=terrain&markers=size:small|color:red|label:A|'
+			+ place.lat + ',' + place.lng + '""/></a>';
+
 	locArea = $('<div></div>');
 	var addressEle = $('<p></p>');
 
 	locArea.append(addressEle);
-	locArea.append(map);
+	locArea.append(image);
 	$(placeholder).replaceWith(locArea);
 
 	var geocoder = new google.maps.Geocoder();

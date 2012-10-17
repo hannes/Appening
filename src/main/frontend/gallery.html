@@ -14,7 +14,7 @@ body {
 	background-color: black;
 }
 
-.pic,.place,.logo {
+.pic,.place,.logo,.map {
 	float: left;
 	height: 150px;
 	width: 150px;
@@ -23,7 +23,7 @@ body {
 	position: relative;
 }
 
-.pic img {
+.pic img,.map img {
 	vertical-align: middle;
 	display: block;
 	max-width: 150px;
@@ -88,6 +88,16 @@ body {
 													ret += '<div class="place"><a href="http://www.appening.at/#-'+place.id+'">'
 															+ place.name
 															+ '</a></div>';
+
+													ret += '<div class="map"><a href="https://maps.google.com/maps?t=m&q=loc:'
+															+ place.lat
+															+ ','
+															+ place.lng
+															+ '&z=13"><img src="http://maps.googleapis.com/maps/api/staticmap?key=AIzaSyCHCVlEq_VleQp6qKdOpPgGT1W1h3yG29s&sensor=false&style=invert_lightness:true&zoom=13&size=150x150&scale=2&format=PNG&maptype=terrain&markers=size:small|color:red|label:A|'
+															+ place.lat
+															+ ','
+															+ place.lng
+															+ '""/></a></div>';
 												}
 												$
 														.each(
