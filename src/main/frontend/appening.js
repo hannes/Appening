@@ -51,8 +51,9 @@ function generateWeb(place) {
 			if (index > maxImages - 1) {
 				return;
 			}
-			ret += '<img height="140px" src="' + link.mediaUrl + '" title="'
-					+ link.title + '" />&nbsp;';
+			ret += '<a target="_new" href="' + link.url
+					+ '"><img height="140px" src="' + link.mediaUrl
+					+ '" title="' + link.title + '"></a>&nbsp;';
 		});
 		ret += '</p></li>';
 	}
@@ -63,7 +64,8 @@ function generateWeb(place) {
 		if (index > maxLinks - 1) {
 			return;
 		}
-		ret += '<li><a href="' + link.url + '">' + link.title + '</a></li>';
+		ret += '<li><a target="_new" href="' + link.url + '">' + link.title
+				+ '</a></li>';
 	});
 	ret += '</ul>';
 
@@ -219,7 +221,6 @@ function generateHtml(place) {
 			+ place.name + ' <span class="distance"></span></h2>';
 
 	ret += generateWeb(place);
-	// ret += '<div>'+generateSocial(place)+'</div>';
 
 	// rest is sub collapsible
 	ret += '<div data-role="collapsible-set" data-mini="true" data-inset="true" data-theme="d" data-content-theme="d">';
@@ -246,14 +247,12 @@ function showMap(pid, placeholder) {
 	place = findPlaceById(pid);
 	var latlng = new google.maps.LatLng(place.lat, place.lng);
 
-	image = '<a href="https://maps.google.com/maps?t=m&q=loc:'
+	image = '<a target="_new" href="https://maps.google.com/maps?t=m&q=loc:'
 			+ place.lat
 			+ ','
 			+ place.lng
 			+ '&z=13"><img src="http://maps.googleapis.com/maps/api/staticmap?key=AIzaSyCHCVlEq_VleQp6qKdOpPgGT1W1h3yG29s&sensor=false&zoom=13&size='
-			+ width
-			+ 'x'
-			+ height
+			+ width + 'x' + height
 			+ '&format=PNG&maptype=terrain&markers=color:red|label:A|'
 			+ place.lat + ',' + place.lng + '""/></a>';
 

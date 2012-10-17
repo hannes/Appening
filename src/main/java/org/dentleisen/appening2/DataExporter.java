@@ -24,6 +24,8 @@ import com.sun.syndication.feed.synd.SyndEntry;
 import com.sun.syndication.feed.synd.SyndEntryImpl;
 import com.sun.syndication.feed.synd.SyndFeed;
 import com.sun.syndication.feed.synd.SyndFeedImpl;
+import com.sun.syndication.feed.synd.SyndImage;
+import com.sun.syndication.feed.synd.SyndImageImpl;
 import com.sun.syndication.io.FeedException;
 import com.sun.syndication.io.SyndFeedOutput;
 
@@ -72,7 +74,6 @@ public class DataExporter {
 		JSONArray placesJson = new JSONArray();
 		// JSON Loop
 		for (PopularPlace p : places) {
-			log.info(p.name);
 			JSONObject placeJson = p.toJSON();
 			JSONArray messagesJson = new JSONArray();
 			JSONArray linksJson = new JSONArray();
@@ -169,6 +170,12 @@ public class DataExporter {
 		feed.setLink("http://www.appening.at");
 		feed.setTitle("Appening Amsterdam");
 		feed.setDescription("Things happening now in Amsterdam according to Twitter.");
+		SyndImage image = new SyndImageImpl();
+		image.setTitle("Appening Amsterdam");
+
+		// careful when updating webpage...
+		image.setUrl("http://www.appening.at/appening-icon-300.png");
+		feed.setImage(image);
 		List<PopularPlace> rssPlaces = Place.loadLastMentionedPlaces(50);
 		List<SyndEntry> entries = new ArrayList<SyndEntry>();
 
@@ -184,11 +191,42 @@ public class DataExporter {
 			description = new SyndContentImpl();
 			description.setType("text/html");
 
-			String html = "<ul><li><a href=\""
-					+ entry.getLink()
-					+ "\">Appening page for place</a></li><li><a href=\"https://maps.google.com/maps?t=h&q=loc:"
-					+ p.lat + "," + p.lng
-					+ "&z=17\">Google Maps</a></li></ul><br /><ul>";
+			String html = "<h2><a href=\"" + entry.getLink() + "\">" + p.name
+					+ "</a></h2>";
+
+			html += "<a href=\"https://maps.google.com/maps?t=m&q=loc:"
+					+ p.lat
+					+ ","
+					+ p.lng
+					+ "&z=13\"><img src=\"http://maps.googleapis.com/maps/api/staticmap?key="
+					+ Utils.getCfgStr("appening.export.googleMapsKey")
+					+ "&sensor=false&zoom=13&size=500x250&format=PNG&maptype=terrain&markers=color:red|label:A|"
+					+ p.lat + "," + p.lng + "\"/></a>";
+
+			html += "<br><div>";
+
+			List<WebResource> allResources = WebResource.loadResources(p,
+					numLinks, numImages);
+			for (WebResource wr : allResources) {
+				if (wr.isImage()) {
+					html += "<a href=\"" + wr.getUrl()
+							+ "\"><img width=\"150px\" src=\""
+							+ wr.getImageUrl() + "\" title=\"" + wr.getTitle()
+							+ "\"/></a>&nbsp;";
+				}
+			}
+
+			html += "</div><br><ul>";
+
+			for (WebResource wr : allResources) {
+				if (!wr.isImage()) {
+					html += "<a href=\"" + wr.getUrl() + "\">" + wr.getTitle()
+							+ "\"/></a></li>";
+				}
+			}
+
+			html += "</ul><br><ul>";
+
 			List<Message> recentMessages = p.loadRecentMessages(numMessages,
 					Utils.messageThreshold);
 

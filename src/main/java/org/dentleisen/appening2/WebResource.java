@@ -87,7 +87,7 @@ public class WebResource {
 		imageScrapers
 				.put("twitpic",
 						Pattern.compile(
-								" <img src=\"(http://[^\"]*\\.cloudfront\\.net/photos/large/[^\"]*)\" ",
+								"<img src=\"(http://[^\"]*\\.cloudfront\\.net/photos/[^\"]*)\"",
 								Pattern.DOTALL));
 		imageScrapers
 				.put("instagram",
@@ -102,6 +102,11 @@ public class WebResource {
 		imageScrapers.put("yfrog", Pattern.compile(
 				"<img [^>]* id=\"main_image\" src=\"(http://[^\"]*)\"",
 				Pattern.DOTALL));
+		imageScrapers.put("via.me", Pattern.compile(
+				"<img src=\"(http://img\\.viame-cdn\\.com/photos/[^\"]*)\"",
+				Pattern.DOTALL));
+		imageScrapers.put("flickr", Pattern.compile(
+				"<img src=\"(http://[^\"]*)\" alt=\"photo\"", Pattern.DOTALL));
 	}
 
 	public WebResource resolve() {
@@ -355,7 +360,7 @@ public class WebResource {
 		PreparedStatement s = null;
 		ResultSet rs = null;
 		try {
-			c = Utils.getConnection();			
+			c = Utils.getConnection();
 			s = c.prepareStatement("SELECT DISTINCT `place`,`tweeted`,`url`,`type`,`title`,`mediaUrl` FROM `urls` WHERE `place`=? ORDER BY `tweeted` DESC LIMIT ?;");
 			s.setInt(1, p.id);
 			s.setInt(2, numLinks);

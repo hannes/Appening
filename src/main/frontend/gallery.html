@@ -14,7 +14,7 @@ body {
 	background-color: black;
 }
 
-.pic,.place,.logo,.map {
+.pic,.place,.logo,.map,.spacer {
 	float: left;
 	height: 150px;
 	width: 150px;
@@ -28,6 +28,16 @@ body {
 	display: block;
 	max-width: 150px;
 	max-height: 150px;
+}
+
+.place img {
+	width: 150px;
+	height: 50px;
+}
+
+.logo img {
+	width: 150px;
+	height: 150px;
 }
 
 .place {
@@ -70,7 +80,7 @@ body {
 <body>
 	<div id="pictures">
 		<div class="logo">
-			<a href="http://www.appening.at"><img src="appening-icon-150.png" /></a>
+			<a href="http://www.appening.at"><img src="appening-icon-300.png" /></a>
 		</div>
 	</div>
 
@@ -86,9 +96,19 @@ body {
 											function(index, place) {
 												if (place.images.length > 0
 														&& place.trend.rank > 1) {
+
+													chartSeries = place.mentionsSeries
+															.slice().reverse();
+													chart = '<img class="imgoverlay" src="http://chart.googleapis.com/chart?cht=ls&chxt=x,y&chf=bg,s,000000&chxr=0,0,72&chxs=0,676767,0,0,_,676767|1,676767,0,0,_,676767&chm=D,ffffff,0,0,3,1&chs=300x100&chds=a&chd=t:'
+															+ chartSeries
+																	.join(',')
+															+ '" />';
+
 													ret += '<div class="place"><a href="http://www.appening.at/#-'+place.id+'">'
 															+ place.name
-															+ '</a></div>';
+															+ '</a>'
+															+ chart
+															+ '</div>';
 
 													ret += '<div class="map"><a href="https://maps.google.com/maps?t=m&q=loc:'
 															+ place.lat
@@ -119,7 +139,10 @@ body {
 																			+ link.title
 																			+ '" /></div>';
 																	});
+													ret += '<div class="spacer"></div>';
+
 												}
+
 											});
 
 							$("#pictures").append(ret);

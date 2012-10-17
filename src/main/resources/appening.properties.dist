@@ -15,6 +15,7 @@ appening.export.awsAccessKey =
 appening.export.awsSecretKey = 
 appening.export.S3Bucket = www.appening.at
 appening.export.s3Prefix = data/
+appening.export.googleMapsKey = 
 
 appening.twitter.minMentions = 10
 appening.twitter.minMentionDays = 7
