@@ -220,8 +220,8 @@ public class DataExporter {
 
 			for (WebResource wr : allResources) {
 				if (!wr.isImage()) {
-					html += "<a href=\"" + wr.getUrl() + "\">" + wr.getTitle()
-							+ "\"/></a></li>";
+					html += "<li><a href=\"" + wr.getUrl() + "\">" + wr.getTitle()
+							+ "</a></li>";
 				}
 			}
 
