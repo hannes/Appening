@@ -11,6 +11,7 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.text.ParseException;
 import java.util.ArrayList;
+import java.util.Calendar;
 import java.util.Collection;
 import java.util.Date;
 import java.util.HashMap;
@@ -107,6 +108,17 @@ public class WebResource {
 				Pattern.DOTALL));
 		imageScrapers.put("flickr", Pattern.compile(
 				"<img src=\"(http://[^\"]*)\" alt=\"photo\"", Pattern.DOTALL));
+		imageScrapers.put("path", Pattern.compile(
+				"<meta property=\"og:image\" content=\"([^\"]*)\"",
+				Pattern.DOTALL));
+	}
+
+	public static void main(String[] args) {
+		WebResource wr = new WebResource("https://path.com/p/MmptI", new Place(
+				42, "Place", 0, 0), new Message("42", "horst", Calendar
+				.getInstance().getTime(), "this sucks"));
+		wr.resolve();
+		log.info(wr);
 	}
 
 	public WebResource resolve() {
@@ -251,7 +263,7 @@ public class WebResource {
 
 	@Override
 	public String toString() {
-		return type + ": " + title + " (" + url + ")";
+		return type + ": " + title + " (" + url + " / " + imageUrl + ")";
 	}
 
 	public boolean hadErrors() {
