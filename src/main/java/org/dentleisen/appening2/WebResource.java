@@ -33,6 +33,7 @@ import org.apache.http.HttpException;
 import org.apache.http.HttpHost;
 import org.apache.http.HttpResponse;
 import org.apache.http.HttpResponseInterceptor;
+import org.apache.http.HttpStatus;
 import org.apache.http.client.methods.HttpGet;
 import org.apache.http.client.methods.HttpUriRequest;
 import org.apache.http.impl.client.DefaultHttpClient;
@@ -128,6 +129,11 @@ public class WebResource {
 			HttpGet get = new HttpGet(shortenedUrl);
 			HttpResponse getResponse = httpClient.execute(get, localContext);
 
+			if (getResponse.getStatusLine().getStatusCode() != HttpStatus.SC_OK) {
+				hadErrors = true;
+				return this;
+			}
+
 			url = getUrlAfterRedirects(localContext);
 			URL u = new URL(url);
 
@@ -157,7 +163,7 @@ public class WebResource {
 			log.debug("Failed to resolve URL", e);
 		}
 		hadErrors = true;
-		return null;
+		return this;
 	}
 
 	public File downloadImageAndResize(int thumbnailSize) {
@@ -335,7 +341,7 @@ public class WebResource {
 					futureIterator.remove();
 					try {
 						WebResource wr = wrf.get();
-						if (wr == null) {
+						if (wr == null || wr.hadErrors()) {
 							continue;
 						}
 						URL u = wr.getUrlObj();
