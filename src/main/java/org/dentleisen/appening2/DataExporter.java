@@ -61,6 +61,9 @@ public class DataExporter {
 		ignoreDomains.add("twitter");
 		ignoreDomains.add("t.co");
 		ignoreDomains.add("alarmeringen.nl");
+		// important, otherwise we will show our own links
+		ignoreDomains.add("appening.at");
+
 	}
 
 	// @SuppressWarnings("unchecked")

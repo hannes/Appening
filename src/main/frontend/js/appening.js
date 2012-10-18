@@ -170,14 +170,16 @@ function pageUpdater() {
 				ele.trigger('expand');
 			}
 
-			$('#posbutton').click(function() {
-				navigator.geolocation.clearWatch(watchId);
-				watchId = navigator.geolocation.watchPosition(geoSuccess, geoError, {
-					enableHighAccuracy : false,
-					maximumAge : 60000,
-					timeout : 30000
-				});
-			});
+			$('#posbutton').click(
+					function() {
+						navigator.geolocation.clearWatch(watchId);
+						watchId = navigator.geolocation.watchPosition(
+								geoSuccess, geoError, {
+									enableHighAccuracy : false,
+									maximumAge : 60000,
+									timeout : 30000
+								});
+					});
 
 			$('#reloadbutton').click(function() {
 				$('#places').html('<p class="loading">reloading...</p>');
