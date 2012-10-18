@@ -28,6 +28,7 @@ import java.util.regex.Pattern;
 
 import net.coobird.thumbnailator.Thumbnails;
 
+import org.apache.commons.lang3.StringEscapeUtils;
 import org.apache.http.Header;
 import org.apache.http.HttpException;
 import org.apache.http.HttpHost;
@@ -145,7 +146,7 @@ public class WebResource {
 				title = title.replace("\n", " ");
 				title = title.replace("\t", " ");
 				title = title.replaceAll(" {2,}", " ");
-				title = title.trim();
+				title = StringEscapeUtils.unescapeHtml4(title.trim());
 			}
 
 			for (Entry<String, Pattern> scraper : imageScrapers.entrySet()) {
