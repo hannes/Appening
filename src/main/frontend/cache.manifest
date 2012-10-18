@@ -1,6 +1,6 @@
 CACHE MANIFEST
 
-# version 16
+# version 18
 
 # remote resources
 http://code.jquery.com/mobile/1.2.0/jquery.mobile-1.2.0.min.css
@@ -11,6 +11,7 @@ http://platform.twitter.com/widgets.js
 http://code.jquery.com/mobile/1.2.0/images/icons-36-white.png
 http://www.google-analytics.com/ga.js
 http://code.jquery.com/mobile/1.2.0/images/ajax-loader.gif
+http://code.jquery.com/mobile/1.2.0/images/icons-18-white.png  
 http://maps.gstatic.com/intl/en_us/mapfiles/api-3/9/17/main.js
 
 # local resources
@@ -37,3 +38,5 @@ http://www.appening.at/data/
 http://www.google-analytics.com/
 http://maps.gstatic.com/
 http://maps.googleapis.com/
+http://chart.googleapis.com/
+http://csi.gstatic.com/
