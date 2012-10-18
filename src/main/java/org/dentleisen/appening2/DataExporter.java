@@ -60,6 +60,7 @@ public class DataExporter {
 		ignoreDomains.add("foursquare");
 		ignoreDomains.add("twitter");
 		ignoreDomains.add("t.co");
+		ignoreDomains.add("alarmeringen.nl");
 	}
 
 	// @SuppressWarnings("unchecked")
@@ -220,8 +221,8 @@ public class DataExporter {
 
 			for (WebResource wr : allResources) {
 				if (!wr.isImage()) {
-					html += "<li><a href=\"" + wr.getUrl() + "\">" + wr.getTitle()
-							+ "</a></li>";
+					html += "<li><a href=\"" + wr.getUrl() + "\">"
+							+ wr.getTitle() + "</a></li>";
 				}
 			}
 
