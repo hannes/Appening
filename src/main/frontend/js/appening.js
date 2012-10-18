@@ -127,6 +127,8 @@ function geoError(positionError) {
 	// console.log(positionError);
 }
 
+var watchId = undefined;
+
 function pageUpdater() {
 	$.getJSON('data/places.json', function(data) {
 		var items = [];
@@ -169,7 +171,8 @@ function pageUpdater() {
 			}
 
 			$('#posbutton').click(function() {
-				navigator.geolocation.watchPosition(geoSuccess, geoError, {
+				navigator.geolocation.clearWatch(watchId);
+				watchId = navigator.geolocation.watchPosition(geoSuccess, geoError, {
 					enableHighAccuracy : false,
 					maximumAge : 60000,
 					timeout : 30000
