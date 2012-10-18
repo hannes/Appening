@@ -64,8 +64,8 @@ public class PopularPlace extends Place {
 		popularity3h = generatePopularity(mentions, 3);
 
 		if (popularity3h.mentions > 1) {
-			rank = popularity6h.mentions * popularity6h.slope + 5
-					* popularity3h.mentions * popularity3h.slope;
+			rank = popularity6h.mentions * (popularity6h.slope + 1) + 3
+					* popularity3h.mentions * (popularity3h.slope + 1);
 		}
 	}
 
