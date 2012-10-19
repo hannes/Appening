@@ -53,7 +53,7 @@ Populate the places table, e.g. from OpenStreetMap dumps
 	`s3cmd -P --exclude "data/*" sync . s3://your.bucket.name/`             
 
 ### Start the tweet collection
-	Run the Java part of the backend:
+Run the Java part of the backend:
 	`java -cp appening.jar -Dfile.encoding=UTF-8 org.dentleisen.appening2.AppeningBackend`
 
 ### Check if everything is running
