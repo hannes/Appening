@@ -74,10 +74,9 @@ function generateWeb(place) {
 
 function generateSocial(place) {
 
-	link = 'http://www.appening.at/#-' + place.id;
-
 	ret = '<p><a href="https://twitter.com/share" class="twitter-share-button" data-url="'
-			+ link
+			+ '/#-'
+			+ place.id
 			+ '" data-text="Something interesting going on at '
 			+ place.name
 			+ '" data-via="AppeningAms" data-count="none">Tweet</a></p>';

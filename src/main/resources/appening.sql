@@ -3,7 +3,7 @@
 -- http://www.phpmyadmin.net
 --
 -- Host: localhost
--- Generation Time: Oct 09, 2012 at 10:55 AM
+-- Generation Time: Oct 19, 2012 at 04:35 PM
 -- Server version: 5.6.7
 -- PHP Version: 5.3.10-1ubuntu3.4
 
@@ -162,7 +162,7 @@ DECLARE `procedureName` VARCHAR(100) DEFAULT 'oldMessagesMoveProc';
 
 DECLARE `cutoffHour` DATETIME;
 
-SET `cutoffHour`= DATE_SUB(NOW(), INTERVAL 48 HOUR);
+SET `cutoffHour`= DATE_SUB(NOW(), INTERVAL 24 HOUR);
 
 `procBody`:BEGIN
 IF (EXISTS(SELECT `running` FROM `procstat` WHERE `procedure`=`procedureName` AND `running`=TRUE)) THEN
@@ -332,6 +332,19 @@ CREATE TABLE IF NOT EXISTS `procstat` (
 -- --------------------------------------------------------
 
 --
+-- Stand-in structure for view `top100places`
+--
+DROP VIEW IF EXISTS `top100places`;
+CREATE TABLE IF NOT EXISTS `top100places` (
+`id` int(11)
+,`name` varchar(200)
+,`lat` double
+,`lng` double
+,`cnt` decimal(32,0)
+);
+-- --------------------------------------------------------
+
+--
 -- Table structure for table `urls`
 --
 
@@ -347,18 +360,30 @@ CREATE TABLE IF NOT EXISTS `urls` (
   KEY `place` (`place`)
 ) ENGINE=MyISAM DEFAULT CHARSET=utf8;
 
+-- --------------------------------------------------------
+
+--
+-- Structure for view `top100places`
+--
+DROP TABLE IF EXISTS `top100places`;
+
+CREATE ALGORITHM=UNDEFINED DEFINER=`root`@`localhost` SQL SECURITY DEFINER VIEW `top100places` AS select `places`.`id` AS `id`,`places`.`name` AS `name`,`places`.`lat` AS `lat`,`places`.`lng` AS `lng`,sum(`counts`.`count`) AS `cnt` from (`counts` join `places` on((`counts`.`place` = `places`.`id`))) group by `places`.`id`,`places`.`lat`,`places`.`lng` order by `cnt` desc limit 100;
+
 DELIMITER $$
 --
 -- Events
 --
 DROP EVENT `generateCountsEvent`$$
-CREATE DEFINER=`root`@`localhost` EVENT `generateCountsEvent` ON SCHEDULE EVERY 1 HOUR STARTS '2012-09-24 16:01:00' ON COMPLETION NOT PRESERVE ENABLE DO CALL generateCountsProc('2012-09-21')$$
+CREATE DEFINER=`root`@`localhost` EVENT `generateCountsEvent` ON SCHEDULE EVERY 1 HOUR STARTS '2012-01-01 00:00:00' ON COMPLETION NOT PRESERVE ENABLE DO CALL generateCountsProc('2012-09-21')$$
 
 DROP EVENT `generateRealtimeEvent`$$
-CREATE DEFINER=`root`@`localhost` EVENT `generateRealtimeEvent` ON SCHEDULE EVERY 15 MINUTE STARTS '2012-09-27 08:56:36' ON COMPLETION NOT PRESERVE ENABLE DO CALL generateRealtimeProc()$$
+CREATE DEFINER=`root`@`localhost` EVENT `generateRealtimeEvent` ON SCHEDULE EVERY 5 MINUTE STARTS '2012-01-01 00:00:00' ON COMPLETION NOT PRESERVE ENABLE DO CALL generateRealtimeProc()$$
 
 DROP EVENT `oldMessagesMoveEvent`$$
-CREATE DEFINER=`root`@`localhost` EVENT `oldMessagesMoveEvent` ON SCHEDULE EVERY 1 DAY STARTS '2012-09-27 10:58:04' ON COMPLETION NOT PRESERVE ENABLE DO CALL oldMessagesMoveProc()$$
+CREATE DEFINER=`root`@`localhost` EVENT `oldMessagesMoveEvent` ON SCHEDULE EVERY 1 DAY STARTS '2012-01-01 04:06:00' ON COMPLETION NOT PRESERVE ENABLE DO CALL oldMessagesMoveProc()$$
+
+DROP EVENT `purgeLogsEvent`$$
+CREATE DEFINER=`root`@`localhost` EVENT `purgeLogsEvent` ON SCHEDULE EVERY 1 DAY STARTS '2012-01-01 00:00:00' ON COMPLETION NOT PRESERVE ENABLE DO purge binary logs before now()$$
 
 DELIMITER ;
 
