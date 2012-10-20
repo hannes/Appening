@@ -38,7 +38,7 @@ Determine GPS coordinates for both a bounding box and circle for your area, e.g.
 	`mvn install`
 
 ### List of Places
-Populate the places table, e.g. from OpenStreetMap dumps
+Populate the places table, e.g. from OpenStreetMap dumps (http://download.geofabrik.de/openstreetmap/)
 * Use the osmosis tool to create a OSM file for your area, substitute coordinates
 	
 	`gzcat some-osm-dump.osm.gz| ./osmosis --read-xml file=- --bb top=52.457 left=4.712 bottom=52.271 right=5.042 --write-xml file=- | gzip > smaller.osm.gz`

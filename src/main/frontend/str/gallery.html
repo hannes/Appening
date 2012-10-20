@@ -1,0 +1,219 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title>Appening Stuttgart - Image Gallery</title>
+
+<!--  jQuery and Plugins -->
+<script src="http://code.jquery.com/jquery-1.8.2.min.js"></script>
+<script src="http://www.appening.at/js/jquery.timeago.js"
+	type="text/javascript"></script>
+
+<link rel="icon" type="image/png" href="img/appening-favicon.png" />
+
+<style type="text/css">
+body {
+	background-color: black;
+}
+
+.pic,.place,.logo,.map,.spacer,.links {
+	float: left;
+	height: 150px;
+	width: 150px;
+	overflow: hidden;
+	margin: 5px;
+	position: relative;
+}
+
+.pic img,.map img {
+	vertical-align: middle;
+	display: block;
+	max-width: 150px;
+	max-height: 150px;
+}
+
+.place img {
+	width: 150px;
+	height: 50px;
+}
+
+.logo img {
+	width: 150px;
+	height: 150px;
+}
+
+.place,.link {
+	font-size: 20pt;
+	font-family: sans-serif;
+	text-align: left;
+}
+
+.links {
+	font-size: 12pt;
+	background-color: #444;
+}
+
+.links a {
+	display: block;
+	margin: 2px;
+	font-family: sans-serif;
+	text-decoration: none;
+	color: gray;
+}
+
+.links a:hover {
+	color: white;
+}
+
+.place a {
+	text-decoration: none;
+	color: white;
+}
+
+.place a:hover {
+	color: white;
+}
+
+.imgoverlay {
+	position: absolute;
+	bottom: 0px;
+	left: 0px;
+	width: 100%;
+	background-color: black;
+	opacity: 0.8;
+	overflow: none;
+}
+
+.imgoverlay .created,.imgoverlay .source {
+	font-family: sans-serif;
+	color: white;
+	display: block;
+}
+
+.imgoverlay .source {
+	text-decoration: none;
+}
+</style>
+
+</head>
+<body>
+	<div id="pictures">
+		<div class="logo">
+			<a href="http://www.appening.at"><img
+				src="img/appening-icon-300.png" /></a>
+		</div>
+		<div class="spacer"></div>
+	</div>
+
+	<script type="text/javascript">
+		$
+				.getJSON(
+						'data/places.json',
+						function(data) {
+							ret = "";
+							$
+									.each(
+											data,
+											function(index, place) {
+												if (place.trend.rank > 1) {
+
+													chartSeries = place.mentionsSeries
+															.slice().reverse();
+													chart = '<img class="imgoverlay" src="http://chart.googleapis.com/chart?cht=ls&chxt=x,y&chf=bg,s,000000&chxr=0,0,72&chxs=0,676767,0,0,_,676767|1,676767,0,0,_,676767&chm=D,ffffff,0,0,3,1&chs=300x100&chds=a&chd=t:'
+															+ chartSeries
+																	.join(',')
+															+ '" />';
+
+													ret += '<div class="place"><a href="http://str.appening.at/#-'+place.id+'">'
+															+ place.name
+															+ '</a>'
+															+ chart
+															+ '</div>';
+
+													ret += '<div class="map"><a href="https://maps.google.com/maps?t=m&q=loc:'
+															+ place.lat
+															+ ','
+															+ place.lng
+															+ '&z=13"><img src="http://maps.googleapis.com/maps/api/staticmap?key=AIzaSyCHCVlEq_VleQp6qKdOpPgGT1W1h3yG29s&sensor=false&style=invert_lightness:true&zoom=13&size=150x150&scale=2&format=PNG&maptype=terrain&markers=size:small|color:red|label:A|'
+															+ place.lat
+															+ ','
+															+ place.lng
+															+ '""/></a></div>';
+
+													if (place.links.length > 0) {
+														ret += '<div class="links">';
+
+														$
+																.each(
+																		place.links,
+																		function(
+																				index,
+																				link) {
+																			if (index > 3) {
+																				return;
+																			}
+																			ret += '<a target="_new" href="'+link.url+'">'
+																					+ link.title
+																					+ '</a>';
+																		});
+														ret += '</div>';
+													}
+													$
+															.each(
+																	place.images,
+																	function(
+																			index,
+																			link) {
+																		if (index > 5) {
+																			return;
+																		}
+																		ret += '<div class="pic"><img data-created="'
+																			+ link.tweeted
+																			+ '" data-source="'
+																			+ link.url
+																			+ '" src="'
+																			+ link.mediaUrl
+																			+ '" title="'
+																			+ link.title
+																			+ '" /></div>';
+																	});
+
+													ret += '<div class="spacer"></div>';
+
+												}
+
+											});
+
+							$("#pictures").append(ret);
+
+							$("#pictures .pic")
+									.mouseenter(
+											function(event) {
+												var ele = $(event.srcElement);
+												var url = document
+														.createElement('a');
+												url.href = ele
+														.attr('data-source');
+
+												$(
+														'<div class="imgoverlay"><span class="created">'
+																+ $
+																		.timeago(ele
+																				.attr('data-created'))
+																+ '</span>'
+																+ '<a class="source" href="'
+																+ ele
+																		.attr('data-source')
+																+ '">@'
+																+ url.hostname
+																+ '</a>'
+																+ '</div>')
+														.insertAfter(ele);
+											});
+							$("#pictures .pic").mouseleave(function(event) {
+								$("#pictures .pic .imgoverlay").remove();
+							});
+						});
+	</script>
+
+</body>
+</html>
