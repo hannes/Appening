@@ -161,7 +161,7 @@ public class WebResource {
 
 			return this;
 		} catch (Exception e) {
-			log.debug("Failed to resolve URL", e);
+			log.warn("Failed to resolve URL " + url, e);
 		}
 		hadErrors = true;
 		return this;
