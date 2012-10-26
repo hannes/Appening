@@ -37,6 +37,7 @@ import org.apache.http.HttpResponseInterceptor;
 import org.apache.http.HttpStatus;
 import org.apache.http.client.methods.HttpGet;
 import org.apache.http.client.methods.HttpUriRequest;
+import org.apache.http.conn.params.ConnManagerParams;
 import org.apache.http.impl.client.DefaultHttpClient;
 import org.apache.http.impl.conn.tsccm.ThreadSafeClientConnManager;
 import org.apache.http.params.BasicHttpParams;
@@ -218,12 +219,15 @@ public class WebResource {
 	}
 
 	private static HttpParams httpParams = new BasicHttpParams();
+	private static DefaultHttpClient httpClient;
 	static {
-		HttpConnectionParams.setConnectionTimeout(httpParams, 30000);
+		HttpConnectionParams.setConnectionTimeout(httpParams, 60000);
+		ThreadSafeClientConnManager cm = new ThreadSafeClientConnManager();
+		cm.setDefaultMaxPerRoute(20);
+		cm.setMaxTotal(200);
+		httpClient = new DefaultHttpClient(cm, httpParams);
 	}
 
-	private static DefaultHttpClient httpClient = new DefaultHttpClient(
-			new ThreadSafeClientConnManager(), httpParams);
 	public static final String LAST_REDIRECT_URL = "last_redirect_url";
 
 	static {
