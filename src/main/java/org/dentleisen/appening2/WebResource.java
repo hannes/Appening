@@ -124,11 +124,12 @@ public class WebResource {
 	}
 
 	public WebResource resolve() {
+		HttpGet get = null;
+		HttpResponse getResponse = null;
 		try {
 			HttpContext localContext = new BasicHttpContext();
-
-			HttpGet get = new HttpGet(shortenedUrl);
-			HttpResponse getResponse = httpClient.execute(get, localContext);
+			get = new HttpGet(shortenedUrl);
+			getResponse = httpClient.execute(get, localContext);
 
 			if (getResponse.getStatusLine().getStatusCode() != HttpStatus.SC_OK) {
 				hadErrors = true;
@@ -162,6 +163,16 @@ public class WebResource {
 			return this;
 		} catch (Exception e) {
 			log.warn("Failed to resolve URL " + url, e);
+			if (get != null) {
+				get.abort();
+			}
+			if (getResponse != null) {
+				try {
+					EntityUtils.consume(getResponse.getEntity());
+				} catch (IOException e1) {
+					log.debug("Failed to clean up", e1);
+				}
+			}
 		}
 		hadErrors = true;
 		return this;
@@ -172,11 +183,13 @@ public class WebResource {
 			log.warn("Cannot download non-images!");
 			return null;
 		}
+		HttpGet get = null;
+		HttpResponse getResponse = null;
 		try {
 			File f = File.createTempFile(this.getClass().getSimpleName() + "-",
 					".image");
-			HttpResponse getResponse = httpClient
-					.execute(new HttpGet(imageUrl));
+			get = new HttpGet(imageUrl);
+			getResponse = httpClient.execute(get);
 			getResponse.getEntity().writeTo(new FileOutputStream(f));
 
 			File imageFile = File.createTempFile(this.getClass()
@@ -189,6 +202,16 @@ public class WebResource {
 		} catch (Exception e) {
 			log.warn(this + ": Unable to download file", e);
 			hadErrors = true;
+			if (get != null) {
+				get.abort();
+			}
+			if (getResponse != null) {
+				try {
+					EntityUtils.consume(getResponse.getEntity());
+				} catch (IOException e1) {
+					log.debug("Failed to clean up", e1);
+				}
+			}
 		}
 		return null;
 
