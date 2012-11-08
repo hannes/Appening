@@ -111,11 +111,14 @@ public class DataExporter {
 
 				if (wr.isImage()) {
 					File imageFile = wr.downloadImageAndResize(thumbnailSize);
-					String imgUrl = Utils.fileToS3(imageFile, Utils.s3Prefix
-							+ p.id + "-" + wr.getTweeted().getTime() + ".png",
-							"image/png");
-					wr.setImageUrl(imgUrl);
-					imageFile.delete();
+					if (imageFile != null) {
+						String imgUrl = Utils.fileToS3(imageFile,
+								Utils.s3Prefix + p.id + "-"
+										+ wr.getTweeted().getTime() + ".png",
+								"image/png");
+						wr.setImageUrl(imgUrl);
+						imageFile.delete();
+					}
 				}
 				wr.save();
 			}
