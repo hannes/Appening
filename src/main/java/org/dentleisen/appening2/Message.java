@@ -18,8 +18,6 @@ import java.util.regex.Pattern;
 import org.apache.log4j.Logger;
 import org.json.simple.JSONObject;
 
-import twitter4j.Tweet;
-
 public class Message {
 	private static Logger log = Logger.getLogger(Message.class);
 
@@ -48,7 +46,6 @@ public class Message {
 
 		return new Message(id, user, created, text);
 	}
-
 
 	public void save() {
 		try {
