@@ -163,7 +163,7 @@ public class WebResource {
 
 			return this;
 		} catch (Exception e) {
-			log.warn("Failed to resolve URL " + url, e);
+			log.warn("Failed to resolve URL " + url);
 			if (get != null) {
 				get.abort();
 			}

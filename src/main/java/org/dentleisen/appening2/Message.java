@@ -49,10 +49,6 @@ public class Message {
 		return new Message(id, user, created, text);
 	}
 
-	public static Message fromTwitter4JObject(Tweet t) {
-		String id = Long.toString(t.getId());
-		return new Message(id, t.getFromUser(), t.getCreatedAt(), t.getText());
-	}
 
 	public void save() {
 		try {
