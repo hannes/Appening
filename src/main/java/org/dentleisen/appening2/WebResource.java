@@ -1,5 +1,6 @@
 package org.dentleisen.appening2;
 
+import java.awt.image.BufferedImage;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
@@ -26,7 +27,7 @@ import java.util.concurrent.Future;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-import net.coobird.thumbnailator.Thumbnails;
+import javax.imageio.ImageIO;
 
 import org.apache.commons.lang3.StringEscapeUtils;
 import org.apache.http.Header;
@@ -37,7 +38,6 @@ import org.apache.http.HttpResponseInterceptor;
 import org.apache.http.HttpStatus;
 import org.apache.http.client.methods.HttpGet;
 import org.apache.http.client.methods.HttpUriRequest;
-import org.apache.http.conn.params.ConnManagerParams;
 import org.apache.http.impl.client.DefaultHttpClient;
 import org.apache.http.impl.conn.tsccm.ThreadSafeClientConnManager;
 import org.apache.http.params.BasicHttpParams;
@@ -49,6 +49,8 @@ import org.apache.http.protocol.HttpContext;
 import org.apache.http.util.EntityUtils;
 import org.apache.log4j.Logger;
 import org.json.simple.JSONObject;
+
+import com.mortennobel.imagescaling.ResampleOp;
 
 public class WebResource {
 
@@ -193,10 +195,13 @@ public class WebResource {
 			getResponse = httpClient.execute(get);
 			getResponse.getEntity().writeTo(new FileOutputStream(f));
 
+			BufferedImage org = ImageIO.read(f);
+			ResampleOp  resampleOp = new ResampleOp (thumbnailSize,thumbnailSize);
+			BufferedImage scaled = resampleOp.filter(org, null);
+			
 			File imageFile = File.createTempFile(this.getClass()
 					.getSimpleName() + "-", ".png");
-			Thumbnails.of(f).size(thumbnailSize, thumbnailSize)
-					.outputFormat("png").toFile(imageFile);
+			ImageIO.write(scaled, "png", imageFile);
 			f.delete();
 
 			return imageFile;
